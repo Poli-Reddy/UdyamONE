@@ -1,0 +1,57 @@
+# Python environments and generated files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+*.egg-info/
+build/
+dist/
+
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Runtime/customer records and model caches
+*.db
+*.db-*
+*.sqlite
+*.sqlite3
+*.jsonl
+*.log
+*.joblib
+
+# Organiser-provided case data and documents
+data/*
+!data/README.md
+kyc_samples/
+kyc_documents/
+*.csv
+*.zip
+*.pptx
+*.pdf
+!docs/NTG_VITVELLORE_Architecture.pdf
+!docs/NTG_VITVELLORE_Privacy_Security.pdf
+
+# Local build tools and submission working files
+tmp/
+submission_updated/
+.review-tools/
+.python-runtime/
+.uv-cache/
+node_modules/
+output/
+~$*
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
