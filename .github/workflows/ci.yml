@@ -1,0 +1,68 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      CASE_PACK_URL: ${{ secrets.CASE_PACK_URL }}
+      CASE_PACK_TOKEN: ${{ secrets.CASE_PACK_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: requirements-dev.lock
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install locked dependencies
+        run: python -m pip install --require-hashes -r requirements-dev.lock
+      - name: Retrieve authorised test pack when configured
+        shell: bash
+        run: |
+          if [ -n "$CASE_PACK_URL" ]; then
+            curl --fail --silent --show-error --location \
+              --header "Authorization: Bearer $CASE_PACK_TOKEN" \
+              "$CASE_PACK_URL" --output "$RUNNER_TEMP/case-pack.zip"
+            unzip -q "$RUNNER_TEMP/case-pack.zip" -d .
+          fi
+      - name: Static syntax checks
+        run: |
+          python -m compileall -q app.py activation.py assistance.py config.py db.py engine.py integrations.py kyc.py planner.py providers.py rate_limit.py security.py whatsapp_bot.py migrations
+          node --check static/settings.js
+          node --check static/decision.js
+      - name: Full tests with authorised fixtures
+        shell: bash
+        run: |
+          if [ -f data/product_catalogue.csv ] && [ -f data/smb_leads.csv ] && [ -d kyc_samples ]; then
+            python -m pytest -q
+            node --test tests/frontend_contracts.cjs
+            python scenarios.py
+          else
+            echo "::warning::Authorised case pack unavailable; fixture-dependent tests were not run. Configure CASE_PACK_URL for protected branches."
+          fi
+
+  container:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: udyamone:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

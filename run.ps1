@@ -7,7 +7,7 @@ if (-not (Test-Path ".venv")) {
 }
 & .\.venv\Scripts\python.exe -m ensurepip --upgrade
 & .\.venv\Scripts\python.exe -m pip install --upgrade pip
-& .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+& .\.venv\Scripts\python.exe -m pip install --require-hashes -r requirements.lock
 $AppOptions = @("app:app", "--reload", "--host", "127.0.0.1", "--port", "$Port")
 if (Test-Path ".env") { $AppOptions += @("--env-file", ".env") }
 & .\.venv\Scripts\python.exe -m uvicorn @AppOptions

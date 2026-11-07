@@ -1,0 +1,60 @@
+services:
+  postgres:
+    image: postgres:17-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-udyamone}
+      POSTGRES_USER: ${POSTGRES_USER:-udyamone}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env.production}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    security_opt:
+      - no-new-privileges:true
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: udyamone:${UDYAMONE_IMAGE_TAG:-pilot}
+    restart: unless-stopped
+    env_file:
+      - ${UDYAM_ENV_FILE:-.env.production}
+    environment:
+      DATABASE_URL: postgresql+psycopg://${POSTGRES_USER:-udyamone}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-udyamone}
+      AUTO_CREATE_SCHEMA: "false"
+      AUTO_MIGRATE: "true"
+    read_only: true
+    tmpfs:
+      - /tmp:size=256m,mode=1770
+    volumes:
+      - ./data:/app/data:ro
+      - udyamone-state:/var/lib/udyamone
+    ports:
+      - "127.0.0.1:${UDYAMONE_PORT:-8000}:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2G
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/ready', timeout=4)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+
+volumes:
+  udyamone-state:
+  postgres-data:

@@ -15,7 +15,7 @@ def test_staff_entry_requires_key_when_configured(monkeypatch):
     response=client.get('/api/operator/session',headers={'x-admin-token':'staff-test-key'})
     assert response.status_code==200
     assert response.headers['cache-control']=='no-store'
-    assert response.json()=={'authorized':True,'authentication':'staff_token'}
+    assert response.json()=={'authorized':True,'authentication':'staff_token','roles':[],'partner_code':''}
 
 
 def test_unconfigured_production_staff_entry_is_closed(monkeypatch):

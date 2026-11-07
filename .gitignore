@@ -1,4 +1,4 @@
-# Python environments and generated files
+# Python and test output
 .venv/
 venv/
 __pycache__/
@@ -12,16 +12,17 @@ htmlcov/
 build/
 dist/
 
-# Credentials and local configuration
+# Secrets and local configuration
 .env
 .env.*
 !.env.example
+!.env.production.example
 *.pem
 *.key
 *.p12
 *.pfx
 
-# Runtime/customer records and model caches
+# Runtime/customer state
 *.db
 *.db-*
 *.sqlite
@@ -30,19 +31,14 @@ dist/
 *.log
 *.joblib
 
-# Organiser-provided case data and documents
+# Organiser-provided synthetic pack
 data/*
 !data/README.md
 kyc_samples/
 kyc_documents/
 *.csv
-*.zip
-*.pptx
-*.pdf
-!docs/NTG_VITVELLORE_Architecture.pdf
-!docs/NTG_VITVELLORE_Privacy_Security.pdf
 
-# Local build tools and submission working files
+# Submission and local tooling
 tmp/
 submission_updated/
 .review-tools/
@@ -50,6 +46,8 @@ submission_updated/
 .uv-cache/
 node_modules/
 output/
+*.zip
+*.pptx
 ~$*
 .DS_Store
 Thumbs.db

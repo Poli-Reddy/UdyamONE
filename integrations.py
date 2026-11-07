@@ -4,7 +4,6 @@ from __future__ import annotations
 import datetime as dt
 import hashlib
 import json
-import os
 import re
 import secrets
 import sqlite3
@@ -16,6 +15,8 @@ from fastapi.responses import PlainTextResponse
 from pydantic import BaseModel, Field
 
 import providers
+from config import demo_mode
+from security import ANALYTICS_ROLES, BILLING_ROLES, KYC_WRITE_ROLES, current_principal
 from whatsapp_bot import normalize_phone, respond
 
 
@@ -49,7 +50,7 @@ async def bounded_body(request: Request):
     return bytes(body)
 
 
-def register(app, conn, order_payload, require_order, require_admin):
+def register(app, conn, order_payload, require_order, require_admin, record_consent=None):
     with conn() as c:
         c.executescript("""
         CREATE TABLE IF NOT EXISTS payment_intents (
@@ -71,11 +72,21 @@ def register(app, conn, order_payload, require_order, require_admin):
 
     @app.get("/api/integrations")
     def integration_status():
-        return dict(providers=providers.status(), demo=os.getenv("UDYAM_DEMO", "true").lower() == "true")
+        return dict(providers=providers.status(), demo=demo_mode())
 
     @app.post("/api/orders/{order_id}/registry")
-    async def registry(order_id: str, b: RegistryRequest, token: str | None = Header(None, alias="x-order-token")):
-        require_order(order_id, token)
+    async def registry(
+        order_id: str,
+        b: RegistryRequest,
+        token: str | None = Header(None, alias="x-order-token"),
+        admin_token: str | None = Header(None, alias="x-admin-token"),
+        staff_request: str | None = Header(None, alias="x-staff-request"),
+    ):
+        principal = current_principal()
+        if (principal and principal.kind == "staff") or admin_token or (demo_mode() and staff_request == "true"):
+            require_admin(admin_token, KYC_WRITE_ROLES)
+        else:
+            require_order(order_id, token)
         order = order_payload(order_id)
         if not b.consent:
             raise HTTPException(400, "Consent to send this registration number and order business name to Cashfree is required")
@@ -89,12 +100,27 @@ def register(app, conn, order_payload, require_order, require_admin):
         result["consent"] = "registry-lookup-v1"
         now = dt.datetime.now(dt.timezone.utc).isoformat()
         with conn() as c:
-            c.execute("INSERT OR REPLACE INTO registry_evidence VALUES (?,?,?,?)", (order_id, b.kind, json.dumps(result), now))
+            c.execute(
+                """INSERT INTO registry_evidence (order_id,kind,result_json,created_at) VALUES (?,?,?,?)
+                   ON CONFLICT(order_id,kind) DO UPDATE SET result_json=excluded.result_json,created_at=excluded.created_at""",
+                (order_id, b.kind, json.dumps(result), now),
+            )
+            if record_consent:
+                record_consent("External registry lookup", "registry-lookup-v1", order_id, outcome=result["outcome"], connection=c)
         return dict(result, recorded_at=now, valid_until=(dt.datetime.now(dt.timezone.utc)+dt.timedelta(days=1)).isoformat(), full_kyc_complete=False)
 
     @app.get("/api/orders/{order_id}/registry")
-    def registry_history(order_id: str, token: str | None = Header(None, alias="x-order-token")):
-        require_order(order_id, token)
+    def registry_history(
+        order_id: str,
+        token: str | None = Header(None, alias="x-order-token"),
+        admin_token: str | None = Header(None, alias="x-admin-token"),
+        staff_request: str | None = Header(None, alias="x-staff-request"),
+    ):
+        principal = current_principal()
+        if (principal and principal.kind == "staff") or admin_token or (demo_mode() and staff_request == "true"):
+            require_admin(admin_token, KYC_WRITE_ROLES)
+        else:
+            require_order(order_id, token)
         with conn() as c:
             rows = c.execute("SELECT result_json,created_at FROM registry_evidence WHERE order_id=?", (order_id,)).fetchall()
         return [dict(json.loads(r[0]), recorded_at=r[1]) for r in rows]
@@ -116,6 +142,7 @@ def register(app, conn, order_payload, require_order, require_admin):
         reference = "uo_" + secrets.token_hex(14)
         with conn() as c:
             c.execute("BEGIN IMMEDIATE")
+            c.select_for_update("SELECT id FROM orders WHERE id=?", (order_id,)).fetchone()
             old = c.execute("SELECT * FROM payment_intents WHERE order_id=?", (order_id,)).fetchone()
             if old:
                 if old["status"] in ("creating", "needs_reconciliation"):
@@ -155,7 +182,7 @@ def register(app, conn, order_payload, require_order, require_admin):
 
     @app.post("/api/orders/{order_id}/payment/reconcile")
     async def reconcile(order_id: str, b: ReconcileRequest, token: str | None = Header(None, alias="x-admin-token")):
-        require_admin(token)
+        require_admin(token, BILLING_ROLES)
         with conn() as c:
             row = c.execute("SELECT * FROM payment_intents WHERE order_id=?", (order_id,)).fetchone()
         if not row:
@@ -206,7 +233,7 @@ def register(app, conn, order_payload, require_order, require_admin):
 
     @app.post("/api/whatsapp/preview")
     def preview(b: PreviewRequest):
-        if os.getenv("UDYAM_DEMO", "true").lower() != "true":
+        if not demo_mode():
             raise HTTPException(403, "Preview is disabled outside demo mode")
         try:
             state, reply = respond(b.state, b.message)
@@ -268,7 +295,11 @@ def register(app, conn, order_payload, require_order, require_admin):
                 else:
                     state, reply = respond(state, text)
                 if state:
-                    c.execute("INSERT OR REPLACE INTO whatsapp_sessions VALUES (?,?,?)", (phone, json.dumps(state), int(time.time())))
+                    c.execute(
+                        """INSERT INTO whatsapp_sessions (phone,state_json,updated_at) VALUES (?,?,?)
+                           ON CONFLICT(phone) DO UPDATE SET state_json=excluded.state_json,updated_at=excluded.updated_at""",
+                        (phone, json.dumps(state), int(time.time())),
+                    )
                 else:
                     c.execute("DELETE FROM whatsapp_sessions WHERE phone=?", (phone,))
                 c.execute("INSERT INTO whatsapp_receipts VALUES (?,'sending',?)", (mid, int(time.time())))
@@ -283,20 +314,24 @@ def register(app, conn, order_payload, require_order, require_admin):
 
     @app.post("/api/assistance/{order_id}/assign")
     def assign(order_id: str, token: str | None = Header(None, alias="x-admin-token")):
-        require_admin(token)
+        require_admin(token, ANALYTICS_ROLES)
         order = order_payload(order_id)
         if not order["consent"] or order["status"] in ("activated", "cancelled"):
             raise HTTPException(409, "Order is not eligible for the assistance pilot")
         tasks = order.get("activation", {}).get("tasks", [])
         skill = "installation" if any(t["status"] in ("failed", "delayed") for t in tasks) else "verification" if order["kyc_status"] in ("pending", "action_required", "rejected") else "advisor"
         with conn() as c:
-            c.execute("INSERT OR IGNORE INTO interventions (order_id,assignment,skill,created_at) VALUES (?,?,?,?)", (order_id, secrets.choice(["assistance", "self_service"]), skill, dt.datetime.now(dt.timezone.utc).isoformat()))
+            c.execute(
+                """INSERT INTO interventions (order_id,assignment,skill,created_at) VALUES (?,?,?,?)
+                   ON CONFLICT(order_id) DO NOTHING""",
+                (order_id, secrets.choice(["assistance", "self_service"]), skill, dt.datetime.now(dt.timezone.utc).isoformat()),
+            )
             result = dict(c.execute("SELECT * FROM interventions WHERE order_id=?", (order_id,)).fetchone())
         return dict(result, dispatched=False, note="Randomised pilot assignment only; confirm research/contact consent and available staff before delivery.")
 
     @app.post("/api/assistance/{order_id}/outcome")
     def outcome(order_id: str, b: OutcomeRequest, token: str | None = Header(None, alias="x-admin-token")):
-        require_admin(token)
+        require_admin(token, ANALYTICS_ROLES)
         order = order_payload(order_id)
         if b.outcome == "activated" and order["status"] != "activated":
             raise HTTPException(409, "Activation has not been recorded for this order")
@@ -311,7 +346,7 @@ def register(app, conn, order_payload, require_order, require_admin):
 
     @app.get("/api/assistance/pilot/results")
     def results(token: str | None = Header(None, alias="x-admin-token")):
-        require_admin(token)
+        require_admin(token, ANALYTICS_ROLES)
         with conn() as c:
             rows = [dict(r) for r in c.execute("SELECT * FROM interventions ORDER BY created_at DESC LIMIT 100")]
         return dict(records=rows, note="Observed operator records; no causal estimate is claimed from this sample.")

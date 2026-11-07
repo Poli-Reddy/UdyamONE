@@ -42,11 +42,11 @@ except Exception:  # pragma: no cover - optional
     RapidOCR = None
 
 D = os.environ.get("DATA_DIR", "data")
-ANCHOR = os.environ.get("UDYAM_TODAY", "2026-07-15")
+ANCHOR = os.environ.get("UDYAM_TODAY", "")
 try:
-    TODAY = dt.date.fromisoformat(ANCHOR)
+    TODAY = dt.date.fromisoformat(ANCHOR) if ANCHOR else dt.date.today()
 except ValueError:
-    TODAY = dt.date(2026, 7, 15)
+    TODAY = dt.date.today()
 
 G = pd.read_csv(f"{D}/mock_gstin_registry.csv").set_index("gstin")
 U = pd.read_csv(f"{D}/mock_udyam_registry.csv").set_index("udyam_number")
@@ -162,7 +162,7 @@ def same_name(a: str, b: str) -> bool:
     """Fuzzy entity match tolerant of OCR noise but strict enough for K07."""
     na, nb = _norm(a), _norm(b)
     if not na or not nb:
-        return True
+        return False
     if na in nb or nb in na:
         return True
     return SequenceMatcher(None, na, nb).ratio() >= 0.93
@@ -492,9 +492,9 @@ def check(
             for_business = field(il, "For business")
             known = [x for x in (trade, legal, str(reg.legal_name) if reg is not None else "", str(ureg.enterprise_name) if ureg is not None else "") if x]
             if for_business and known and not any(same_name(for_business, x) for x in known):
-                add("warn", "id_business", "ID is issued for a different business name", "Add an authorisation letter or e-sign link")
+                add("action", "id_business", "ID is issued for a different business name", "Add an authorisation letter or e-sign link")
             if sid_name and reg is not None and not same_name(sid_name, str(reg.legal_name)) and "LLP" not in str(reg.legal_name):
-                add("warn", "signatory", "Signatory differs from registered proprietor", "Request an e-sign authorisation")
+                add("action", "signatory", "Signatory differs from registered proprietor", "Request an e-sign authorisation")
 
     # ---- Address proof --------------------------------------------------
     if os.path.exists(p("address_proof")):
@@ -506,7 +506,7 @@ def check(
             if not bill:
                 add("action", "address_date", "Bill date unreadable", "Upload a clearer bill")
             elif bill > TODAY:
-                add("warn", "address_future", "Bill date is in the future", "Upload a bill from the last 90 days")
+                add("action", "address_future", "Bill date is in the future", "Upload a bill from the last 90 days")
             else:
                 age = (TODAY - bill).days
                 if age > 90:
@@ -514,12 +514,12 @@ def check(
             billed = field(al, "Billed to")
             known = [x for x in (trade, legal, str(reg.legal_name) if reg is not None else "", str(ureg.enterprise_name) if ureg is not None else "") if x]
             if billed and known and not any(same_name(billed, x) for x in known):
-                add("warn", "address_name", "Address proof is in a different business name", "Upload a bill in the business name or add an authorisation")
+                add("action", "address_name", "Address proof is in a different business name", "Upload a bill in the business name or add an authorisation")
 
     # ---- Cross-document -------------------------------------------------
     if reg is not None and ureg is not None:
         if not same_name(str(reg.legal_name), str(ureg.enterprise_name)) and not same_name(str(reg.trade_name), str(ureg.enterprise_name)):
-            add("warn", "gst_udyam_name", "GST and Udyam business names differ", "Confirm the legal entity or upload matching documents")
+            add("action", "gst_udyam_name", "GST and Udyam business names differ", "Confirm the legal entity or upload matching documents")
 
     # De-duplicate repeated codes (e.g. a missing Udyam certificate and the
     # GST-free lane's "Udyam number required" message).  Missing-document

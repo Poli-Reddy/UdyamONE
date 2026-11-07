@@ -70,7 +70,7 @@ def seed(c, order_id: str, items: list[dict]):
 
 
 def snapshot(c, order_id: str, start: str) -> dict:
-    tasks = [json.loads(r[0]) for r in c.execute("SELECT data_json FROM activation_tasks WHERE order_id=? ORDER BY rowid", (order_id,))]
+    tasks = [json.loads(r[0]) for r in c.execute("SELECT data_json FROM activation_tasks WHERE order_id=? ORDER BY id", (order_id,))]
     by = {t["id"]: t for t in tasks}
     today = dt.date.today()
     anchor = max(today, dt.date.fromisoformat(start[:10]))
@@ -101,22 +101,24 @@ def snapshot(c, order_id: str, start: str) -> dict:
         task["forecast"] = str(date) if date else None
     failed = [t for t in tasks if t["status"] == "failed"]
     checks = [t for t in tasks if t["kind"] == "check"]
-    events = [dict(event_id=r[0], **json.loads(r[1]), recorded_at=r[2]) for r in c.execute("SELECT event_id,payload_json,created_at FROM activation_events WHERE order_id=? ORDER BY rowid DESC LIMIT 30", (order_id,))]
+    events = [dict(event_id=r[0], **json.loads(r[1]), recorded_at=r[2]) for r in c.execute("SELECT event_id,payload_json,created_at FROM activation_events WHERE order_id=? ORDER BY created_at DESC,event_id DESC LIMIT 30", (order_id,))]
     return dict(tasks=tasks, events=events, complete=bool(checks) and all(t["status"] == "complete" for t in checks), completed_services=sum(t["status"] == "complete" for t in checks), total_services=len(checks), forecast=max((t["forecast"] for t in checks), default=None) if all(t["forecast"] for t in checks) else None, forecast_type="estimate; not a confirmed appointment", provisioning="simulation / operator-recorded evidence; Airtel API not connected", alternatives=[dict(site_id=t["site_id"], failed_product=t["product_id"], suggestion="Review AirFiber feasibility and catalogue dependencies. A new quote and customer acceptance are required before changing product, cost or contract.", changes_applied=False) for t in failed if t["product_id"] in ("P01", "P02", "P03", "P05", "P06")])
 
 
-def record(c, order_id: str, event: TaskEvent, source: str = "simulation") -> bool:
+def record(c, order_id: str, event: TaskEvent, source: str = "simulation", actor: str | None = None) -> bool:
     """Transactional caller, optimistic concurrency and replay protection."""
     body = event.model_dump()
     body.pop("event_id")
     body["source"] = source
+    if actor:
+        body["actor"] = actor
     encoded = json.dumps(body, sort_keys=True)
     duplicate = c.execute("SELECT payload_json FROM activation_events WHERE order_id=? AND event_id=?", (order_id, event.event_id)).fetchone()
     if duplicate:
         if duplicate[0] != encoded:
             raise ValueError("Event ID was already used with different content")
         return False
-    row = c.execute("SELECT data_json FROM activation_tasks WHERE order_id=? AND id=?", (order_id, event.task_id)).fetchone()
+    row = c.select_for_update("SELECT data_json FROM activation_tasks WHERE order_id=? AND id=?", (order_id, event.task_id)).fetchone()
     if not row:
         raise ValueError("Unknown activation task")
     task = json.loads(row[0])
@@ -146,6 +148,8 @@ def record(c, order_id: str, event: TaskEvent, source: str = "simulation") -> bo
             raise ValueError("Only failed or delayed tasks can be retried")
         task.update(status="pending", delay_days=0)
     task.update(version=task["version"]+1, evidence=event.evidence, source=source)
+    if actor:
+        task["actor"] = actor
     c.execute("UPDATE activation_tasks SET data_json=? WHERE order_id=? AND id=?", (json.dumps(task), order_id, event.task_id))
     c.execute("INSERT INTO activation_events VALUES (?,?,?,?)", (order_id, event.event_id, encoded, dt.datetime.now(dt.timezone.utc).isoformat()))
     return True

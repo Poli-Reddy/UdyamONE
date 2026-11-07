@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import datetime as dt
 import asyncio
+import base64
 import io
 import hashlib
 import hmac
@@ -16,16 +17,17 @@ import os
 import re
 import secrets
 import shutil
-import sqlite3
 import tempfile
 import urllib.request
+import urllib.parse
 from collections import OrderedDict
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Literal
 
 import pandas as pd
 from fastapi import FastAPI, File, Form, Header, HTTPException, Query, Request, UploadFile
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, field_validator
 
@@ -33,10 +35,31 @@ from engine import D, TODAY, SEGMENTS, cat, eligible, parse_intent, quote, recom
 from planner import BusinessContext, make_plan, bill_draft
 import activation
 from assistance import Simulation, route, simulate
+from config import SETTINGS, demo_mode
+from rate_limit import LIMITER, LIMITS
+from security import (
+    ADMIN,
+    ACTIVATION_WRITE_ROLES,
+    ANALYTICS_ROLES,
+    BILLING_ROLES,
+    KYC_WRITE_ROLES,
+    MANAGER,
+    ORDER_READ_ROLES,
+    PARTNER,
+    SALES,
+    STAFF_ROLES,
+    Principal,
+    current_principal,
+    has_any_role,
+    reset_principal,
+    set_principal,
+    verify_oidc_token,
+)
+from db import DB_PATH, connect as db_connect
 
 BASE = Path(__file__).resolve().parent
 STATIC = BASE / "static" / "index.html"
-DB = Path(os.environ.get("UDYAM_DB", BASE / "orders.db"))
+DB = DB_PATH
 CONSENT_LOG = Path(os.environ.get("UDYAM_CONSENT_LOG", BASE / "consent_log.jsonl"))
 ADMIN_TOKEN = os.environ.get("ADMIN_TOKEN", "")
 LANGS = {"en": "English", "hi": "Hindi", "ta": "Tamil", "te": "Telugu"}
@@ -52,14 +75,62 @@ _TTS_CACHE_MAX = 64
 
 app = FastAPI(title="UdyamOne", version="3.0.0")
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
+_OCR_SEMAPHORE = asyncio.Semaphore(SETTINGS.ocr_concurrency)
 
 
 @app.middleware("http")
 async def security_headers(request: Request, call_next):
-    response = await call_next(request)
+    length = request.headers.get("content-length")
+    if length:
+        try:
+            if int(length) > SETTINGS.max_request_bytes:
+                return JSONResponse({"detail": "Request body is too large"}, status_code=413)
+        except ValueError:
+            return JSONResponse({"detail": "Invalid Content-Length header"}, status_code=400)
+
+    client = request.client.host if request.client else "unknown"
+    if SETTINGS.trust_proxy_headers:
+        forwarded = request.headers.get("x-forwarded-for", "").split(",", 1)[0].strip()
+        if forwarded:
+            client = forwarded
+    rule = LIMITS.get(request.url.path)
+    if rule and not demo_mode():
+        allowed, retry = await LIMITER.allow(client, request.url.path, *rule)
+        if not allowed:
+            return JSONResponse(
+                {"detail": "Too many requests; try again later"},
+                status_code=429,
+                headers={"Retry-After": str(retry)},
+            )
+
+    principal = None
+    authorization = request.headers.get("authorization", "")
+    if authorization:
+        scheme, _, credential = authorization.partition(" ")
+        if scheme.lower() != "bearer" or not credential:
+            return JSONResponse({"detail": "Invalid authorization header"}, status_code=401)
+        try:
+            if credential.startswith("uoc_"):
+                principal = _customer_principal(credential)
+            else:
+                principal = await asyncio.to_thread(verify_oidc_token, credential)
+        except ValueError:
+            return JSONResponse({"detail": "Invalid or expired access token"}, status_code=401)
+    context_token = set_principal(principal)
+    try:
+        response = await call_next(request)
+    finally:
+        reset_principal(context_token)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Permissions-Policy"] = "camera=(), geolocation=(), microphone=(self), payment=()"
+    response.headers["Cross-Origin-Opener-Policy"] = "same-origin"
+    response.headers["X-Request-ID"] = request.headers.get("x-request-id", secrets.token_hex(12))[:128]
+    if request.url.path.startswith("/api/"):
+        response.headers["Cache-Control"] = "no-store"
+    if SETTINGS.production:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
         "script-src 'self' 'unsafe-inline'; connect-src 'self'; media-src 'self' blob:; "
@@ -96,18 +167,26 @@ _MODEL_AUC: float | None = None
 # Models
 # ---------------------------------------------------------------------------
 
+def _normalise_phone(value: str) -> str:
+    if not isinstance(value, str) or not re.fullmatch(r"\+?[0-9 ()-]+", value.strip()):
+        raise ValueError("Enter a valid phone number")
+    digits = re.sub(r"\D", "", value)
+    if not 10 <= len(digits) <= 15:
+        raise ValueError("Phone number must contain 10 to 15 digits")
+    return ("+" if value.strip().startswith("+") else "") + digits
+
 class Profile(BaseModel):
     tier: int = Field(default=1, ge=1, le=2)
     employees: int = Field(default=1, ge=1, le=10000)
     sites: int = Field(default=1, ge=1, le=100)
     gstin: bool = False
     gstin_active: bool | None = None
-    type: str = ""
-    needs: list[str] = Field(default_factory=list)
+    type: str = Field(default="", max_length=120)
+    needs: list[str] = Field(default_factory=list, max_length=24)
     current_spend: int | None = Field(default=None, ge=0, le=10000000)
-    current_provider: str = ""
+    current_provider: str = Field(default="", max_length=120)
     budget: int | None = Field(default=None, ge=0, le=10000000)
-    state: str = ""
+    state: str = Field(default="", max_length=80)
     context: BusinessContext | None = None
 
     def as_engine_profile(self) -> dict:
@@ -119,7 +198,7 @@ class Profile(BaseModel):
 
 
 class RecommendRequest(Profile):
-    off: list[str] = Field(default_factory=list)
+    off: list[str] = Field(default_factory=list, max_length=25)
     lang: str = "en"
 
 
@@ -131,8 +210,10 @@ class OrderRequest(BaseModel):
     address: str = Field(min_length=5, max_length=400)
     language: str = "en"
     profile: Profile
-    off: list[str] = Field(default_factory=list)
-    partner_code: str = ""
+    off: list[str] = Field(default_factory=list, max_length=25)
+    partner_code: str = Field(default="", max_length=64)
+    partner_exp: int | None = Field(default=None, ge=0)
+    partner_sig: str = Field(default="", max_length=128)
     consent: bool = False
     plan_fingerprint: str = ""
 
@@ -144,12 +225,7 @@ class OrderRequest(BaseModel):
     @field_validator("phone")
     @classmethod
     def validate_phone(cls, value):
-        if not re.fullmatch(r"\+?[0-9 ()-]+", value.strip()):
-            raise ValueError("Enter a valid phone number")
-        digits = re.sub(r"\D", "", value)
-        if not 10 <= len(digits) <= 15:
-            raise ValueError("Phone number must contain 10 to 15 digits")
-        return ("+" if value.strip().startswith("+") else "") + digits
+        return _normalise_phone(value)
 
     @field_validator("email")
     @classmethod
@@ -164,7 +240,7 @@ class OrderRequest(BaseModel):
 
 
 class IntentRequest(BaseModel):
-    text: str = ""
+    text: str = Field(default="", max_length=1500)
     lang: str = "en"
 
 
@@ -190,23 +266,26 @@ class TTSRequest(BaseModel):
         return re.sub(r"\s+", " ", value).strip() if isinstance(value, str) else value
 
 
+class OTPStartRequest(BaseModel):
+    phone: str = Field(min_length=7, max_length=32)
+
+    @field_validator("phone")
+    @classmethod
+    def validate_phone(cls, value):
+        return _normalise_phone(value)
+
+
+class OTPVerifyRequest(BaseModel):
+    challenge_id: str = Field(pattern=r"^[A-Za-z0-9_-]{20,100}$")
+    code: str = Field(pattern=r"^\d{6}$")
+
+
 # ---------------------------------------------------------------------------
 # Orders database
 # ---------------------------------------------------------------------------
 
-class ClosingConnection(sqlite3.Connection):
-    def __exit__(self, *args):
-        try:
-            return super().__exit__(*args)
-        finally:
-            self.close()
-
-
-def _conn() -> sqlite3.Connection:
-    DB.parent.mkdir(parents=True, exist_ok=True)
-    c = sqlite3.connect(DB, timeout=10, factory=ClosingConnection)
-    c.row_factory = sqlite3.Row
-    return c
+def _conn():
+    return db_connect()
 
 
 def init_db() -> None:
@@ -239,16 +318,152 @@ def init_db() -> None:
             """
         )
         activation.init_tables(c)
+        c.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS auth_otp_challenges (
+                id TEXT PRIMARY KEY, phone TEXT NOT NULL, code_hash TEXT NOT NULL,
+                created_at TEXT NOT NULL, expires_at TEXT NOT NULL,
+                attempts INTEGER NOT NULL DEFAULT 0, consumed_at TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_auth_otp_phone_created
+                ON auth_otp_challenges(phone, created_at);
+            CREATE TABLE IF NOT EXISTS customer_sessions (
+                token_hash TEXT PRIMARY KEY, phone TEXT NOT NULL,
+                created_at TEXT NOT NULL, expires_at TEXT NOT NULL, revoked_at TEXT
+            );
+            CREATE INDEX IF NOT EXISTS idx_customer_sessions_phone
+                ON customer_sessions(phone);
+            CREATE TABLE IF NOT EXISTS order_customers (
+                order_id TEXT PRIMARY KEY, phone TEXT NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS consent_events (
+                id TEXT PRIMARY KEY, occurred_at TEXT NOT NULL, purpose TEXT NOT NULL,
+                notice TEXT NOT NULL, order_id TEXT, lane TEXT, outcome TEXT,
+                codes_json TEXT NOT NULL
+            );
+            CREATE INDEX IF NOT EXISTS idx_consent_order_time
+                ON consent_events(order_id, occurred_at);
+            """
+        )
 
 
-init_db()
+if SETTINGS.auto_create_schema:
+    init_db()
+else:
+    try:
+        with _conn() as c:
+            c.execute("SELECT id FROM orders LIMIT 1").fetchone()
+    except Exception as exc:
+        raise RuntimeError("Database schema is not ready; run `alembic upgrade head`") from exc
+
+
+def _utcnow() -> dt.datetime:
+    return dt.datetime.now(dt.timezone.utc)
+
+
+def _otp_secret() -> bytes:
+    # Production startup validation requires an explicit pepper. A process-local
+    # fallback is sufficient only for an explicitly enabled local demo.
+    if SETTINGS.otp_pepper:
+        return SETTINGS.otp_pepper.encode()
+    if demo_mode():
+        value = getattr(_otp_secret, "_demo", None)
+        if value is None:
+            value = secrets.token_bytes(32)
+            setattr(_otp_secret, "_demo", value)
+        return value
+    raise ValueError("Customer OTP is not configured")
+
+
+def _partner_secret() -> bytes:
+    if SETTINGS.partner_referral_secret:
+        return SETTINGS.partner_referral_secret.encode()
+    if demo_mode():
+        value = getattr(_partner_secret, "_demo", None)
+        if value is None:
+            value = secrets.token_bytes(32)
+            setattr(_partner_secret, "_demo", value)
+        return value
+    raise HTTPException(503, "Partner referral signing is not configured")
+
+
+def _partner_signature(code: str, expires: int) -> str:
+    return hmac.new(_partner_secret(), f"{code}:{expires}".encode(), hashlib.sha256).hexdigest()
+
+
+def _otp_hash(challenge_id: str, code: str) -> str:
+    return hmac.new(_otp_secret(), f"{challenge_id}:{code}".encode(), hashlib.sha256).hexdigest()
+
+
+def _customer_principal(token: str) -> Principal:
+    if not token.startswith("uoc_") or len(token) < 40:
+        raise ValueError("Invalid customer token")
+    digest = hashlib.sha256(token.encode()).hexdigest()
+    with _conn() as c:
+        row = c.execute(
+            "SELECT phone,expires_at,revoked_at FROM customer_sessions WHERE token_hash=?",
+            (digest,),
+        ).fetchone()
+    if not row or row["revoked_at"] or dt.datetime.fromisoformat(row["expires_at"]) <= _utcnow():
+        raise ValueError("Expired customer token")
+    return Principal(kind="customer", subject="phone:" + row["phone"], phone=row["phone"], token_hash=digest)
+
+
+async def _deliver_otp(phone: str, code: str) -> None:
+    if demo_mode():
+        return
+    if not (SETTINGS.otp_delivery_url and SETTINGS.otp_delivery_token):
+        raise HTTPException(503, "Customer sign-in delivery service is not configured")
+    import httpx
+
+    try:
+        async with httpx.AsyncClient(timeout=10, follow_redirects=False) as client:
+            response = await client.post(
+                SETTINGS.otp_delivery_url,
+                headers={"Authorization": "Bearer " + SETTINGS.otp_delivery_token},
+                json={
+                    "destination": phone,
+                    "template": "udyamone_login",
+                    "variables": {"code": code, "valid_minutes": 5},
+                },
+            )
+        response.raise_for_status()
+    except httpx.HTTPError as exc:
+        raise HTTPException(503, "Sign-in code could not be delivered; try again later") from exc
+
+
+def _record_consent(
+    purpose: str,
+    notice: str,
+    order_id: str | None = None,
+    lane: str | None = None,
+    outcome: str | None = None,
+    codes: list[str] | None = None,
+    connection=None,
+) -> None:
+    values = (
+        "ce_" + secrets.token_hex(16),
+        _utcnow().isoformat(timespec="seconds"),
+        purpose,
+        notice,
+        order_id,
+        lane,
+        outcome,
+        json.dumps(codes or []),
+    )
+    sql = "INSERT INTO consent_events (id,occurred_at,purpose,notice,order_id,lane,outcome,codes_json) VALUES (?,?,?,?,?,?,?,?)"
+    if connection is not None:
+        connection.execute(sql, values)
+    else:
+        with _conn() as c:
+            c.execute(sql, values)
 
 
 def _lane_for(p: dict) -> str:
     return "Standard" if p.get("gstin_active") else "GST-free"
 
 
-def _order_dict(row: sqlite3.Row) -> dict:
+def _order_dict(row: Any) -> dict:
     d = dict(row)
     d["items"] = json.loads(d.pop("items_json"))
     d["profile"] = json.loads(d.pop("profile_json"))
@@ -274,20 +489,53 @@ def _order_payload(order_id: str) -> dict:
     return _order_dict(row)
 
 
-def _require_admin(token: str | None) -> None:
-    if not ADMIN_TOKEN and os.getenv("UDYAM_DEMO", "true").lower() != "true":
-        raise HTTPException(503, "Configure ADMIN_TOKEN for operator access outside demo mode")
-    if ADMIN_TOKEN and (not token or not hmac.compare_digest(token, ADMIN_TOKEN)):
-        raise HTTPException(401, "Admin token required")
+def _customer_order_payload(order: dict) -> dict:
+    """Remove operator-only evidence from customer API responses."""
+    payload = deepcopy(order)
+    progress = payload.get("activation")
+    if progress:
+        progress["events"] = []
+        for task in progress.get("tasks", []):
+            task.pop("evidence", None)
+            task.pop("source", None)
+            task.pop("actor", None)
+    return payload
+
+
+def _require_admin(token: str | None, allowed_roles=STAFF_ROLES) -> Principal | None:
+    principal = current_principal()
+    if principal and principal.kind == "staff":
+        if has_any_role(principal, allowed_roles):
+            return principal
+        raise HTTPException(403, "Your staff role cannot perform this action")
+    # The shared token remains only as a local/staging compatibility mechanism.
+    if not SETTINGS.production and ADMIN_TOKEN:
+        if token and hmac.compare_digest(token, ADMIN_TOKEN):
+            return None
+        raise HTTPException(401, "Staff authentication required")
+    if demo_mode() and not SETTINGS.production:
+        return None
+    if not SETTINGS.oidc_issuer:
+        raise HTTPException(503, "OIDC staff authentication is not configured")
+    raise HTTPException(401, "Staff authentication required")
 
 
 def _require_order(order_id: str, token: str | None) -> None:
+    principal = current_principal()
+    if principal and principal.kind == "customer":
+        with _conn() as c:
+            row = c.execute("SELECT phone FROM order_customers WHERE order_id=?", (order_id,)).fetchone()
+        if row and hmac.compare_digest(str(row["phone"]), principal.phone):
+            return
+        raise HTTPException(403, "This order does not belong to the signed-in customer")
+    if SETTINGS.customer_auth_required:
+        raise HTTPException(401, "Customer sign-in is required")
     with _conn() as c:
         row = c.execute("SELECT access_hash FROM decision_plans WHERE order_id=?", (order_id,)).fetchone()
     if row:
         if not token or not hmac.compare_digest(hashlib.sha256(token.encode()).hexdigest(), row[0]):
             raise HTTPException(401, "This order's access token is required")
-    elif os.getenv("UDYAM_DEMO", "true").lower() != "true":
+    elif not demo_mode():
         raise HTTPException(403, "Legacy orders require operator access outside demo mode")
 
 
@@ -555,6 +803,106 @@ def home():
     return HTMLResponse(STATIC.read_text(encoding="utf-8"))
 
 
+@app.get("/robots.txt", response_class=PlainTextResponse, include_in_schema=False)
+def robots():
+    return "User-agent: *\nAllow: /\nDisallow: /api/\n"
+
+
+@app.post("/api/auth/customer/request-otp")
+async def request_customer_otp(b: OTPStartRequest):
+    phone = b.phone
+    now = _utcnow()
+    with _conn() as c:
+        c.execute("DELETE FROM auth_otp_challenges WHERE expires_at<?", ((now - dt.timedelta(days=1)).isoformat(),))
+        c.execute("DELETE FROM customer_sessions WHERE expires_at<?", ((now - dt.timedelta(days=7)).isoformat(),))
+        recent = c.execute(
+            "SELECT created_at FROM auth_otp_challenges WHERE phone=? ORDER BY created_at DESC LIMIT 1",
+            (phone,),
+        ).fetchone()
+        if recent and (now - dt.datetime.fromisoformat(recent["created_at"])).total_seconds() < 60:
+            raise HTTPException(429, "Wait before requesting another sign-in code")
+    challenge_id = secrets.token_urlsafe(24)
+    code = f"{secrets.randbelow(1_000_000):06d}"
+    expires = now + dt.timedelta(minutes=5)
+    with _conn() as c:
+        c.execute(
+            "INSERT INTO auth_otp_challenges (id,phone,code_hash,created_at,expires_at,attempts,consumed_at) VALUES (?,?,?,?,?,0,NULL)",
+            (challenge_id, phone, _otp_hash(challenge_id, code), now.isoformat(), expires.isoformat()),
+        )
+    try:
+        await _deliver_otp(phone, code)
+    except HTTPException:
+        with _conn() as c:
+            c.execute("DELETE FROM auth_otp_challenges WHERE id=?", (challenge_id,))
+        raise
+    result = {"challenge_id": challenge_id, "expires_in": 300, "delivered": not demo_mode()}
+    if demo_mode():
+        result["debug_code"] = code
+    return result
+
+
+@app.post("/api/auth/customer/verify-otp")
+def verify_customer_otp(b: OTPVerifyRequest):
+    now = _utcnow()
+    with _conn() as c:
+        c.execute("BEGIN IMMEDIATE")
+        row = c.select_for_update("SELECT * FROM auth_otp_challenges WHERE id=?", (b.challenge_id,)).fetchone()
+        if not row or row["consumed_at"] or dt.datetime.fromisoformat(row["expires_at"]) <= now:
+            raise HTTPException(400, "Sign-in code is invalid or expired")
+        if int(row["attempts"]) >= 5:
+            raise HTTPException(429, "Too many incorrect attempts; request a new code")
+        if not hmac.compare_digest(row["code_hash"], _otp_hash(b.challenge_id, b.code)):
+            c.execute("UPDATE auth_otp_challenges SET attempts=attempts+1 WHERE id=?", (b.challenge_id,))
+            raise HTTPException(400, "Sign-in code is invalid or expired")
+        token = "uoc_" + secrets.token_urlsafe(32)
+        digest = hashlib.sha256(token.encode()).hexdigest()
+        expires = now + dt.timedelta(hours=SETTINGS.otp_session_hours)
+        c.execute("UPDATE auth_otp_challenges SET consumed_at=? WHERE id=?", (now.isoformat(), b.challenge_id))
+        c.execute(
+            "INSERT INTO customer_sessions (token_hash,phone,created_at,expires_at,revoked_at) VALUES (?,?,?,?,NULL)",
+            (digest, row["phone"], now.isoformat(), expires.isoformat()),
+        )
+    return {"access_token": token, "token_type": "bearer", "expires_at": expires.isoformat()}
+
+
+@app.get("/api/auth/customer/session")
+def customer_session():
+    principal = current_principal()
+    if not principal or principal.kind != "customer":
+        raise HTTPException(401, "Customer sign-in is required")
+    return {"authenticated": True, "phone": principal.phone}
+
+
+@app.post("/api/auth/customer/logout")
+def customer_logout():
+    principal = current_principal()
+    if not principal or principal.kind != "customer":
+        raise HTTPException(401, "Customer sign-in is required")
+    with _conn() as c:
+        c.execute(
+            "UPDATE customer_sessions SET revoked_at=? WHERE token_hash=? AND revoked_at IS NULL",
+            (_utcnow().isoformat(), principal.token_hash),
+        )
+    return {"logged_out": True}
+
+
+@app.get("/api/live")
+def live():
+    return {"status": "ok"}
+
+
+@app.get("/api/ready")
+def ready():
+    try:
+        with _conn() as c:
+            c.execute("SELECT 1").fetchone()
+        if cat.empty or LEADS.empty:
+            raise RuntimeError("Reference data is unavailable")
+    except Exception:
+        raise HTTPException(503, "Application dependencies are not ready")
+    return {"status": "ready", "version": app.version}
+
+
 @app.get("/api/health")
 def health():
     try:
@@ -569,8 +917,8 @@ def health():
         tts = "microsoft-neural-online"
     except Exception:
         tts = "browser-fallback"
-    model, auc = _train_model()
-    return dict(
+    model, auc = _train_model() if SETTINGS.enable_synthetic_model else (None, None)
+    result = dict(
         status="ok",
         version=app.version,
         ocr=ocr,
@@ -581,6 +929,9 @@ def health():
         model_auc=round(auc, 3) if auc else None,
         anchor_date=str(TODAY),
     )
+    if SETTINGS.production:
+        return {k: result[k] for k in ("status", "version", "ocr", "tts")}
+    return result
 
 
 @app.get("/api/voices")
@@ -596,9 +947,10 @@ def voices():
 @app.get("/api/operator/session")
 def operator_session(response: Response, token: str | None = Header(None, alias="x-admin-token")):
     """Check staff access without fetching customer records or creating a session."""
-    _require_admin(token)
+    principal = _require_admin(token)
     response.headers["Cache-Control"] = "no-store"
-    return dict(authorized=True, authentication="staff_token" if ADMIN_TOKEN else "local_demo")
+    method = "oidc" if principal else "staff_token" if ADMIN_TOKEN else "local_demo"
+    return dict(authorized=True, authentication=method, roles=sorted(principal.roles) if principal else [], partner_code=principal.partner_code if principal else "")
 
 
 async def _generate_tts(text: str, voice: str, rate: str) -> bytes:
@@ -722,6 +1074,12 @@ def create_order(b: OrderRequest):
     if not b.consent:
         raise HTTPException(400, "Consent is required before creating an order")
     p = b.profile.as_engine_profile()
+    principal = current_principal()
+    if SETTINGS.customer_auth_required:
+        if not principal or principal.kind != "customer":
+            raise HTTPException(401, "Customer sign-in is required before accepting an order")
+        if not hmac.compare_digest(principal.phone, b.clean_phone()):
+            raise HTTPException(403, "The order phone must match the signed-in customer")
     plan = make_plan(p) if p.get("context") else None
     if plan:
         if not plan["ready"]:
@@ -730,13 +1088,25 @@ def create_order(b: OrderRequest):
             raise HTTPException(409, "The plan changed; review and accept the refreshed quote")
         seg, q = plan["segment"], plan["quote"]
     else:
+        if not demo_mode():
+            raise HTTPException(409, "Review locations and existing services before accepting a plan")
         seg, pick, notes = recommend(p)
         q = quote(pick, seg, b.off, p)
     if not q["items"]:
         raise HTTPException(400, "The selected bundle is empty")
     lane = _lane_for(p)
-    oid = "UO-" + dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d") + "-" + secrets.token_hex(4).upper()
+    oid = "UO-" + dt.datetime.now(dt.timezone.utc).strftime("%Y%m%d") + "-" + secrets.token_hex(16).upper()
     partner = re.sub(r"[^A-Za-z0-9-]", "", b.partner_code or "")[:24].upper()
+    if partner:
+        valid_referral = bool(
+            b.partner_exp
+            and b.partner_exp >= int(_utcnow().timestamp())
+            and b.partner_exp <= int((_utcnow() + dt.timedelta(days=31)).timestamp())
+            and b.partner_sig
+            and hmac.compare_digest(b.partner_sig, _partner_signature(partner, b.partner_exp))
+        )
+        if not valid_referral and not demo_mode():
+            raise HTTPException(400, "Partner referral is invalid or expired")
     now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     access_token = secrets.token_urlsafe(32)
     with _conn() as c:
@@ -751,13 +1121,18 @@ def create_order(b: OrderRequest):
             ),
         )
         c.execute("INSERT INTO decision_plans VALUES (?,?,?,?)", (oid, json.dumps(plan or {"quote": q, "legacy": True}), hashlib.sha256(access_token.encode()).hexdigest(), now))
+        c.execute("INSERT INTO order_customers (order_id,phone) VALUES (?,?)", (oid, b.clean_phone()))
         activation.seed(c, oid, q["items"])
-    return dict(_order_payload(oid), access_token=access_token)
+        _record_consent("Order creation and contact", "order-v1", oid, lane, "accepted", connection=c)
+    result = _customer_order_payload(_order_payload(oid))
+    if not SETTINGS.customer_auth_required:
+        result["access_token"] = access_token
+    return result
 
 
 @app.get("/api/orders")
 def list_orders(limit: int = Query(20, ge=1, le=100), token: str | None = Header(None, alias="x-admin-token")):
-    _require_admin(token)
+    _require_admin(token, ORDER_READ_ROLES)
     with _conn() as c:
         rows = c.execute("SELECT * FROM orders ORDER BY created_at DESC LIMIT ?", (limit,)).fetchall()
     return [_order_dict(r) for r in rows]
@@ -766,18 +1141,18 @@ def list_orders(limit: int = Query(20, ge=1, le=100), token: str | None = Header
 @app.get("/api/orders/{order_id}")
 def get_order(order_id: str, token: str | None = Header(None, alias="x-order-token")):
     _require_order(order_id, token)
-    return _order_payload(order_id)
+    return _customer_order_payload(_order_payload(order_id))
 
 
 @app.get("/api/operator/orders/{order_id}")
 def operator_order(order_id: str, token: str | None = Header(None, alias="x-admin-token")):
-    _require_admin(token)
+    _require_admin(token, ORDER_READ_ROLES)
     return _order_payload(order_id)
 
 
 @app.post("/api/orders/{order_id}/status")
 def set_status(order_id: str, b: StatusRequest, token: str | None = Header(None, alias="x-admin-token")):
-    _require_admin(token)
+    _require_admin(token, ACTIVATION_WRITE_ROLES)
     allowed = ("placed", "quote_accepted", "kyc_pending", "kyc_complete", "install_scheduled", "activated", "cancelled")
     if b.status not in allowed:
         raise HTTPException(400, f"status must be one of {allowed}")
@@ -802,9 +1177,13 @@ async def kyc_api(
     addr: UploadFile | None = File(None),
     udyam: UploadFile | None = File(None),
     token: str | None = Header(None, alias="x-order-token"),
+    admin_token: str | None = Header(None, alias="x-admin-token"),
+    staff_request: str | None = Header(None, alias="x-staff-request"),
 ):
     if consent != "true":
         raise HTTPException(400, "Consent is required before KYC")
+    if not SETTINGS.allow_mock_kyc:
+        raise HTTPException(503, "Production document-verification provider is not configured")
     lane = lane if lane in ("standard", "gst_free") else "standard"
     if lane == "gst_free":
         if gst is not None and gst.filename:
@@ -816,7 +1195,11 @@ async def kyc_api(
     if kyc.backend() == "none":
         raise HTTPException(503, "KYC engine unavailable: install RapidOCR or Tesseract")
     if order_id:
-        _require_order(order_id, token)
+        principal = current_principal()
+        if (principal and principal.kind == "staff") or admin_token or (demo_mode() and staff_request == "true"):
+            _require_admin(admin_token, KYC_WRITE_ROLES)
+        else:
+            _require_order(order_id, token)
         bound_order = _order_payload(order_id)
         if bound_order["status"] == "cancelled":
             raise HTTPException(409, "This order is cancelled")
@@ -826,6 +1209,8 @@ async def kyc_api(
             existing_verification = c.execute("SELECT data_json FROM activation_tasks WHERE order_id=? AND id='verification'", (order_id,)).fetchone()
         if existing_verification and json.loads(existing_verification[0])["status"] == "complete":
             raise HTTPException(409, "Verification is already recorded; use an operator review for identity changes, or a new order after demo-only verification")
+    elif not demo_mode():
+        _require_admin(None, KYC_WRITE_ROLES)
     t = tempfile.mkdtemp()
     try:
         files = [(gst, "gst_certificate"), (sid, "signatory_id"), (addr, "address_proof"), (udyam, "udyam_certificate")]
@@ -837,15 +1222,36 @@ async def kyc_api(
             data = await f.read(8 * 1024 * 1024 + 1)
             if len(data) > 8 * 1024 * 1024:
                 raise HTTPException(400, f"{name} is larger than 8 MB")
+            try:
+                from PIL import Image
+                with Image.open(io.BytesIO(data)) as image:
+                    if image.format not in {"PNG", "JPEG", "WEBP"}:
+                        raise HTTPException(415, f"{name} must be PNG, JPEG or WebP")
+                    if image.width * image.height > 25_000_000:
+                        raise HTTPException(413, f"{name} has too many pixels")
+                    image.verify()
+            except HTTPException:
+                raise
+            except Exception:
+                raise HTTPException(400, f"{name} is not a valid image")
             with open(f"{t}/U_{name}.png", "wb") as out:
                 out.write(data)
         try:
-            _, verdict, findings = kyc.check(t, "U", lane=lane, udyam_number=udyam_number)
-            if order_id:
-                binding = kyc.bind_order(t, "U", bound_order, udyam_number)
-                findings.extend(binding)
-                if binding and verdict == "VERIFIED":
-                    verdict = "ACTION_REQUIRED"
+            try:
+                await asyncio.wait_for(_OCR_SEMAPHORE.acquire(), timeout=2)
+            except asyncio.TimeoutError:
+                raise HTTPException(503, "Document processing is busy; try again shortly")
+            try:
+                _, verdict, findings = await asyncio.to_thread(
+                    kyc.check, t, "U", lane, udyam_number
+                )
+                if order_id:
+                    binding = await asyncio.to_thread(kyc.bind_order, t, "U", bound_order, udyam_number)
+                    findings.extend(binding)
+                    if binding and verdict == "VERIFIED":
+                        verdict = "ACTION_REQUIRED"
+            finally:
+                _OCR_SEMAPHORE.release()
         except HTTPException:
             raise
         except Exception:
@@ -861,9 +1267,11 @@ async def kyc_api(
         verdict=verdict,
         codes=[f["code"] for f in findings],
     )
-    CONSENT_LOG.parent.mkdir(parents=True, exist_ok=True)
-    with CONSENT_LOG.open("a", encoding="utf-8") as fh:
-        fh.write(json.dumps(record) + "\n")
+    _record_consent("KYC verification", "kyc-v1", order_id or None, lane, verdict, record["codes"])
+    if not SETTINGS.production:
+        CONSENT_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with CONSENT_LOG.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(record) + "\n")
     if order_id:
         with _conn() as c:
             c.execute("BEGIN IMMEDIATE")
@@ -888,7 +1296,9 @@ def bo(
     segment: str | None = None,
     token: str | None = Header(None, alias="x-admin-token"),
 ):
-    _require_admin(token)
+    _require_admin(token, frozenset({*ANALYTICS_ROLES, SALES}))
+    if not SETTINGS.enable_synthetic_model:
+        raise HTTPException(503, "Production lead model is not configured or approved")
     x = LEADS[(LEADS.outcome == "Dropped") & LEADS.stage_reached.isin(["Needs assessed", "Quote accepted", "KYC complete"])].copy()
     if segment:
         x = x[x.segment == segment]
@@ -924,6 +1334,8 @@ def bo(
 
 @app.get("/api/partner/qr")
 def partner_qr(code: str, request: Request):
+    if SETTINGS.production:
+        raise HTTPException(404, "Use the authenticated partner referral endpoint")
     code = re.sub(r"[^A-Za-z0-9-]", "", code)[:24].upper()
     if not code:
         raise HTTPException(400, "code is required")
@@ -938,9 +1350,44 @@ def partner_qr(code: str, request: Request):
         raise HTTPException(501, f"QR generation unavailable: {exc}")
 
 
+@app.get("/api/partner/referral")
+def partner_referral(
+    request: Request,
+    code: str = "",
+    token: str | None = Header(None, alias="x-admin-token"),
+):
+    principal = _require_admin(token, frozenset({ADMIN, MANAGER, PARTNER}))
+    if principal and PARTNER in principal.roles:
+        code = principal.partner_code
+    code = re.sub(r"[^A-Za-z0-9-]", "", code)[:24].upper()
+    if not code:
+        raise HTTPException(400, "Partner code is required")
+    expires = int((_utcnow() + dt.timedelta(days=30)).timestamp())
+    signature = _partner_signature(code, expires)
+    query = urllib.parse.urlencode({"partner": code, "partner_exp": expires, "partner_sig": signature})
+    url = str(request.base_url).rstrip("/") + "/?" + query
+    try:
+        import qrcode
+        image = qrcode.make(url)
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+    except Exception as exc:
+        raise HTTPException(501, f"QR generation unavailable: {exc}")
+    return {
+        "code": code,
+        "expires_at": dt.datetime.fromtimestamp(expires, dt.timezone.utc).isoformat(),
+        "url": url,
+        "qr_data_url": "data:image/png;base64," + base64.b64encode(buffer.getvalue()).decode(),
+    }
+
+
 @app.get("/api/partner/summary")
 def partner_summary(code: str, token: str | None = Header(None, alias="x-admin-token")):
-    _require_admin(token)
+    principal = _require_admin(token, frozenset({*ANALYTICS_ROLES, PARTNER}))
+    if principal and PARTNER in principal.roles:
+        if code and code.upper() != principal.partner_code:
+            raise HTTPException(403, "Partners can view only their own attribution")
+        code = principal.partner_code
     code = re.sub(r"[^A-Za-z0-9-]", "", code)[:24].upper()
     with _conn() as c:
         rows = c.execute("SELECT * FROM orders WHERE partner_code=?", (code,)).fetchall()
@@ -958,6 +1405,10 @@ def partner_summary(code: str, token: str | None = Header(None, alias="x-admin-t
 
 @app.post("/api/bills/extract")
 async def extract_bill(consent: str = Form(...), bill: UploadFile = File(...)):
+    if SETTINGS.customer_auth_required:
+        principal = current_principal()
+        if not principal or principal.kind != "customer":
+            raise HTTPException(401, "Customer sign-in is required")
     if consent != "true":
         raise HTTPException(400, "Consent is required to read the bill")
     content = await bill.read(8 * 1024 * 1024 + 1)
@@ -974,21 +1425,22 @@ async def extract_bill(consent: str = Form(...), bill: UploadFile = File(...)):
         except Exception:
             raise HTTPException(400, "Bill could not be read; enter the service details manually")
     draft = bill_draft("\n".join(lines))
+    _record_consent("Bill OCR for existing-service review", "bill-ocr-v1", outcome="processed")
     # Only extracted candidate fields leave this request; raw OCR is not stored.
     return draft
 
 
 @app.post("/api/orders/{order_id}/events")
 def activation_event(order_id: str, event: activation.TaskEvent, token: str | None = Header(None, alias="x-admin-token")):
-    _require_admin(token)
+    principal = _require_admin(token, ACTIVATION_WRITE_ROLES)
     order = _order_payload(order_id)
     if order["status"] == "cancelled":
         raise HTTPException(409, "This order is cancelled")
-    source = "simulation" if os.getenv("UDYAM_DEMO", "true").lower() == "true" else "operator_evidence"
+    source = "simulation" if demo_mode() else "operator_evidence"
     try:
         with _conn() as c:
             c.execute("BEGIN IMMEDIATE")
-            activation.record(c, order_id, event, source)
+            activation.record(c, order_id, event, source, principal.subject if principal else None)
             progress = activation.snapshot(c, order_id, order["created_at"])
             state = "activated" if progress["complete"] else "install_scheduled" if any(t["status"] == "complete" and t["kind"] == "provision" for t in progress["tasks"]) else order["status"]
             c.execute("UPDATE orders SET status=? WHERE id=?", (state, order_id))
@@ -999,8 +1451,8 @@ def activation_event(order_id: str, event: activation.TaskEvent, token: str | No
 
 @app.post("/api/orders/{order_id}/demo-verification")
 def demo_verification(order_id: str, token: str | None = Header(None, alias="x-admin-token")):
-    _require_admin(token)
-    if os.getenv("UDYAM_DEMO", "true").lower() != "true":
+    _require_admin(token, ACTIVATION_WRITE_ROLES)
+    if not demo_mode():
         raise HTTPException(403, "Demo verification is disabled")
     order = _order_payload(order_id)
     if order["status"] == "cancelled":
@@ -1019,7 +1471,7 @@ def demo_verification(order_id: str, token: str | None = Header(None, alias="x-a
 
 @app.post("/api/assistance/simulate")
 def assistance_simulator(b: Simulation, token: str | None = Header(None, alias="x-admin-token")):
-    _require_admin(token)
+    _require_admin(token, ANALYTICS_ROLES)
     return simulate(bo(limit=5000, segment=None, token=token)["leads"], b)
 
 
@@ -1065,7 +1517,7 @@ def accept_recovery(order_id: str, b: RecoveryRequest, token: str | None = Heade
     changed = {key for key in old_items if key not in new_items or old_items[key] != new_items[key]}
     with _conn() as c:
         c.execute("BEGIN IMMEDIATE")
-        current = c.execute("SELECT plan_json FROM decision_plans WHERE order_id=?", (order_id,)).fetchone()
+        current = c.select_for_update("SELECT plan_json FROM decision_plans WHERE order_id=?", (order_id,)).fetchone()
         if json.loads(current[0]).get("fingerprint") != b.base_fingerprint:
             raise HTTPException(409, "Accepted plan changed; refresh the recovery preview")
         if c.execute("SELECT status FROM orders WHERE id=?", (order_id,)).fetchone()[0] == "cancelled":
@@ -1081,12 +1533,13 @@ def accept_recovery(order_id: str, b: RecoveryRequest, token: str | None = Heade
         q = candidate["quote"]
         c.execute("UPDATE orders SET items_json=?,monthly=?,setup=?,contract_months=?,profile_json=? WHERE id=?", (json.dumps(q["items"]),q["monthly"],q["setup"],q["contract_months"],json.dumps(p),order_id))
         activation.replace_tasks(c, order_id, q["items"])
-    return _order_payload(order_id)
+        _record_consent("Revised recovery plan acceptance", "recovery-v1", order_id, outcome="accepted", connection=c)
+    return _customer_order_payload(_order_payload(order_id))
 
 
 @app.get("/api/assistance/orders")
 def order_assistance(token: str | None = Header(None, alias="x-admin-token")):
-    _require_admin(token)
+    _require_admin(token, frozenset({*ORDER_READ_ROLES, MANAGER, SALES}))
     orders = list_orders(limit=100, token=token)
     rows = []
     for order in orders:
@@ -1098,4 +1551,4 @@ def order_assistance(token: str | None = Header(None, alias="x-admin-token")):
 
 
 from integrations import register as register_integrations
-register_integrations(app, _conn, _order_payload, _require_order, _require_admin)
+register_integrations(app, _conn, _order_payload, _require_order, _require_admin, _record_consent)

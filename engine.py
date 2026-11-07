@@ -15,11 +15,11 @@ from typing import Any
 import pandas as pd
 
 D = os.environ.get("DATA_DIR", "data")
-ANCHOR = os.environ.get("UDYAM_TODAY", "2026-07-15")
+ANCHOR = os.environ.get("UDYAM_TODAY", "")
 try:
-    TODAY = dt.date.fromisoformat(ANCHOR)
+    TODAY = dt.date.fromisoformat(ANCHOR) if ANCHOR else dt.date.today()
 except ValueError:
-    TODAY = dt.date(2026, 7, 15)
+    TODAY = dt.date.today()
 
 cat = pd.read_csv(f"{D}/product_catalogue.csv").set_index("product_id")
 
