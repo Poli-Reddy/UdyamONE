@@ -23,3 +23,5 @@ with tempfile.TemporaryDirectory(prefix='udyam-ui-fixtures-') as folder:
     profile['context']['owned']=[dict(site_id='main',capability='email',quantity=5,adequacy='adequate',monthly=700)]
     empty=client.post('/api/recommend',json=profile).json()
     print(json.dumps(dict(order=order,recommendation=rec,nothing_to_buy=empty)))
+    from db import dispose
+    dispose()

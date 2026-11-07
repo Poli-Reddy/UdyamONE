@@ -85,36 +85,62 @@ function startListening(){
  recognition.onend=()=>{if(activeRecognition===recognition)activeRecognition=null;$('mic').setAttribute('aria-pressed','false')};
  try{recognition.start()}catch{stopListening();$('inputStatus').textContent='Could not start the microphone. You can type your answer.'}
 }
-function testToolsEnabled(){return !!(staffView&&integrationInfo?.demo&&$('testTools')?.checked)}
+function testToolsEnabled(){return !!(hasStaffRole(STAFF_ROLE.admin,STAFF_ROLE.activation)&&integrationInfo?.demo&&$('testTools')?.checked)}
 function refreshTestTools(){
  document.body.classList.toggle('test-tools',testToolsEnabled());
- if($('testToolsSection'))$('testToolsSection').hidden=!(staffView&&integrationInfo?.demo);
+ if($('testToolsSection'))$('testToolsSection').hidden=!(hasStaffRole(STAFF_ROLE.admin,STAFF_ROLE.activation)&&integrationInfo?.demo);
  if(S.order?.activation)renderOrder(S.order);
 }
 function openSettings(){
  settingsReturnFocus=document.activeElement;stopListening();$('settingsDialog').showModal();$('closeSettings').focus();
 }
 function closeSettings(){$('settingsDialog').close()}
+function openAccess(panel='customerAccessPanel'){
+ stopListening();for(const button of document.querySelectorAll('[data-access-panel]'))button.classList.toggle('on',button.dataset.accessPanel===panel);for(const section of document.querySelectorAll('.access-panel'))section.classList.toggle('on',section.id===panel);$('accessDialog').showModal();$('closeAccess').focus();
+}
+function closeAccess(){if($('accessDialog').open)$('accessDialog').close()}
 function updateWorkspaceUI(){
  $('workspaceBar').hidden=!staffView;$('staffAccessForm').hidden=staffView;$('staffSession').hidden=!staffView;
- $('connectionSettings').hidden=!staffView;$('staffMessage').textContent='';
+ $('connectionSettings').hidden=!hasStaffRole(STAFF_ROLE.admin);$('staffMessage').textContent='';
+ if(staffView){const labels=staffIdentity.roles.length?staffIdentity.roles.map(r=>r.replace('udyamone_','').replaceAll('_',' ')).join(' · '):'Local demonstration · all staff capabilities';$('workspaceRole').textContent=labels}
  refreshTestTools();
+}
+let customerChallenge='';
+function updateCustomerSession(){
+ const active=!!sessionStorage.getItem('udyam_customer_token');
+ $('customerLoginForm').hidden=active;$('customerSession').hidden=!active;
+ document.body.classList.toggle('customer-authenticated',active);$('openAccess').textContent=active?'My account':'Sign in';updateJourneyNav();
+}
+async function sendCustomerCode(){
+ const phone=$('customerPhone').value.trim();if(!phone){$('customerAuthMessage').textContent='Enter your phone number.';return}
+ $('sendCustomerCode').disabled=true;$('customerAuthMessage').textContent='Sending code…';
+ try{const d=await api('/api/auth/customer/request-otp',{phone});customerChallenge=d.challenge_id;$('customerCodeForm').hidden=false;$('customerAuthMessage').textContent=d.debug_code?'Local test code: '+d.debug_code:'Code sent. It expires in five minutes.';$('customerCode').focus()}
+ catch(e){$('customerAuthMessage').textContent=e.message}finally{$('sendCustomerCode').disabled=false}
+}
+async function verifyCustomerCode(){
+ if(!customerChallenge||!$('customerCode').reportValidity())return;
+ try{const d=await api('/api/auth/customer/verify-otp',{challenge_id:customerChallenge,code:$('customerCode').value.trim()});sessionStorage.setItem('udyam_customer_token',d.access_token);$('customerAuthMessage').textContent='Phone verified.';if(!$('phone').value)$('phone').value=$('customerPhone').value;updateCustomerSession();closeAccess();showCustomerDashboard()}
+ catch(e){$('customerAuthMessage').textContent=e.message}
+}
+async function customerLogout(){
+ try{await api('/api/auth/customer/logout',{},customerHeaders())}catch{}
+ sessionStorage.removeItem('udyam_customer_token');customerChallenge='';$('customerCode').value='';$('customerCodeForm').hidden=true;updateCustomerSession();showHome();
 }
 async function enterStaffWorkspace(){
  const button=$('enterStaff');button.disabled=true;$('staffMessage').textContent='Checking staff access…';
- try{await api('/api/operator/session',undefined,operatorHeaders());setStaffView(true);updateWorkspaceUI();closeSettings();go('bo')}
- catch(error){$('adminToken').value='';$('staffMessage').textContent=error.message.includes('Admin token')?'Enter a valid staff access key.':error.message}
+ try{const identity=await api('/api/operator/session',undefined,operatorHeaders());staffIdentity={roles:identity.roles||[],partner_code:identity.partner_code||''};setStaffView(true);updateWorkspaceUI();closeAccess();showApp('bo');configureStaffWorkspace()}
+ catch(error){$('adminToken').value='';$('staffMessage').textContent=(error.message.includes('authentication')||error.message.includes('Admin token'))?'Enter a valid authorised access token.':error.message}
  finally{button.disabled=false}
 }
 function leaveStaffWorkspace(){
  $('adminToken').value='';$('testTools').checked=false;orderLoadSequence++;
- if(S.order&&!sessionStorage.getItem('uo_token_'+S.order.id)){
+ if(S.order&&!sessionStorage.getItem('uo_token_'+S.order.id)&&!sessionStorage.getItem('udyam_customer_token')){
   S.order=null;$('trackRes').textContent='Enter your order reference and private access code to track services.';
   for(const id of ['trackId','kycOrder','orderAccess','udyamNo','f_gst','f_ud','f_sid','f_addr'])$(id).value='';$('kres').textContent='';
   localStorage.removeItem('udyam_order');resetAdvisor();
  }
  $('routingOrders').textContent='';$('boTable').querySelector('tbody').innerHTML='';$('boMeta').textContent='';$('partnerSummary').textContent='';
- setStaffView(false);updateWorkspaceUI();closeSettings();go('adv');
+ staffIdentity={roles:[],partner_code:''};setStaffView(false);updateWorkspaceUI();closeAccess();showHome();
 }
 function renderConnectionSettings(){
  const providers=integrationInfo?.providers;if(!providers)return;
@@ -129,13 +155,17 @@ function setupSettings(){
  applyLang();$('languageScope').hidden=S.lang==='en';
  // Refresh the initial prompt without autoplay when saved preferences are restored.
  const aloud=$('voice').checked;$('voice').checked=false;$('chat').innerHTML='';ask();$('voice').checked=aloud;
- $('openSettings').onclick=openSettings;$('footerSettings').onclick=openSettings;$('closeSettings').onclick=closeSettings;
- $('settingsDialog').addEventListener('close',()=>{stopSpeech();settingsReturnFocus?.focus()});
- $('settingsDialog').addEventListener('click',event=>{if(event.target===$('settingsDialog')){const box=$('settingsDialog').getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)closeSettings()}});
+  $('openSettings').onclick=openSettings;$('footerSettings').onclick=openSettings;$('closeSettings').onclick=closeSettings;
+  $('openAccess').onclick=()=>openAccess(sessionStorage.getItem('udyam_customer_token')?'customerAccessPanel':'customerAccessPanel');$('closeAccess').onclick=closeAccess;$('landingSignIn').onclick=()=>openAccess('customerAccessPanel');$('openCustomerSignIn').onclick=()=>openAccess('customerAccessPanel');$('openCustomerDashboard').onclick=()=>{closeAccess();showCustomerDashboard()};
+  document.querySelectorAll('[data-access-panel]').forEach(button=>button.onclick=()=>{for(const item of document.querySelectorAll('[data-access-panel]'))item.classList.toggle('on',item===button);for(const section of document.querySelectorAll('.access-panel'))section.classList.toggle('on',section.id===button.dataset.accessPanel)});
+  $('settingsDialog').addEventListener('close',()=>{stopSpeech();settingsReturnFocus?.focus()});
+  $('settingsDialog').addEventListener('click',event=>{if(event.target===$('settingsDialog')){const box=$('settingsDialog').getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)closeSettings()}});
+  $('accessDialog').addEventListener('click',event=>{if(event.target===$('accessDialog')){const box=$('accessDialog').getBoundingClientRect();if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)closeAccess()}});
  $('lang').onchange=()=>{stopSpeech();stopListening();S.lang=$('lang').value;S.voiceGender=randomVoiceGender();applyLang();$('languageScope').hidden=S.lang==='en';if(!businessContext){const aloud=$('voice').checked;$('voice').checked=false;$('chat').innerHTML='';ask();$('voice').checked=aloud}savePreferences();voiceStatus($('voice').checked?'Voice is on. The next advisor prompt will be read aloud.':'Voice is off.')};
- $('voice').onchange=()=>{stopSpeech();if($('voice').checked)S.voiceGender=randomVoiceGender();savePreferences();voiceStatus($('voice').checked?'Voice is on. The next advisor prompt will be read aloud.':'Voice is off.')};
- $('enterStaff').onclick=enterStaffWorkspace;$('adminToken').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();enterStaffWorkspace()}};
- $('leaveStaff').onclick=leaveStaffWorkspace;$('returnCustomer').onclick=leaveStaffWorkspace;$('testTools').onchange=refreshTestTools;
+  $('voice').onchange=()=>{stopSpeech();if($('voice').checked)S.voiceGender=randomVoiceGender();savePreferences();voiceStatus($('voice').checked?'Voice is on. The next advisor prompt will be read aloud.':'Voice is off.')};
+  $('enterStaff').onclick=enterStaffWorkspace;$('adminToken').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();enterStaffWorkspace()}};
+  $('sendCustomerCode').onclick=sendCustomerCode;$('verifyCustomerCode').onclick=verifyCustomerCode;$('customerLogout').onclick=customerLogout;$('customerCode').onkeydown=event=>{if(event.key==='Enter'){event.preventDefault();verifyCustomerCode()}};updateCustomerSession();
+  $('leaveStaff').onclick=leaveStaffWorkspace;$('returnCustomer').onclick=leaveStaffWorkspace;$('testTools').onchange=refreshTestTools;
  $('mic').onclick=startListening;$('mic').setAttribute('aria-pressed','false');
  if(!(window.SpeechRecognition||window.webkitSpeechRecognition)){$('mic').disabled=true;$('mic').title='Voice input is not supported in this browser';$('inputStatus').textContent='Type your answer or use the choices above. Voice input is unavailable in this browser.'}
  window.addEventListener('pagehide',()=>{stopSpeech();stopListening()});

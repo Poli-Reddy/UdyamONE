@@ -41,7 +41,7 @@ test('customer tracker keeps internal controls, IDs and unavailable payments out
 
 test('staff view exposes explicit simulation controls without enabling an unconfigured checkout',()=>{
  const h=harness();h.run('staffView=true;$("testTools").checked=true;integrationInfo={demo:true,providers:{payments:{status:"not_configured"}}};renderOrder(fixture.order)');
- const markup=h.nodes.get('trackRes').innerHTML;assert.match(markup,/Staff activation controls/);assert.match(markup,/data-task=/);assert.ok(h.nodes.has('demoVerify'));assert.ok(!h.nodes.has('paymentLink'));
+ const markup=h.nodes.get('trackRes').innerHTML;assert.match(markup,/Activation evidence controls/);assert.match(markup,/data-task=/);assert.ok(h.nodes.has('demoVerify'));assert.ok(!h.nodes.has('paymentLink'));
 });
 
 test('quote uses actual API totals, names and correctly wires acceptance',()=>{
@@ -119,7 +119,7 @@ test('currency places the minus sign before the rupee symbol',()=>{
 
 test('denied staff access never changes workspace and clears the attempted key',async()=>{
  const h=harness();h.nodes.get('adminToken').value='wrong';h.context.fetch=async()=>({ok:false,status:401,json:async()=>({detail:'Admin token required'})});
- await h.run('enterStaffWorkspace()');assert.equal(h.run('staffView'),false);assert.equal(h.nodes.get('adminToken').value,'');assert.match(h.nodes.get('staffMessage').textContent,/valid staff access key/);
+ await h.run('enterStaffWorkspace()');assert.equal(h.run('staffView'),false);assert.equal(h.nodes.get('adminToken').value,'');assert.match(h.nodes.get('staffMessage').textContent,/valid authorised access token/);
 });
 
 test('successful staff entry uses server authorisation without persisting the access key',async()=>{
@@ -127,4 +127,14 @@ test('successful staff entry uses server authorisation without persisting the ac
  h.nodes.get('adminToken').value='staff-key';h.context.fetch=async(url,request)=>{h.requests.push({url,request});return {ok:true,status:200,json:async()=>({authorized:true})}};
  h.run('go=function(tab){S.lastTab=tab}');await h.run('enterStaffWorkspace()');
  assert.equal(h.requests[0].url,'/api/operator/session');assert.equal(h.requests[0].request.headers['x-admin-token'],'staff-key');assert.equal(h.run('staffView'),true);assert.equal(h.run('S.lastTab'),'bo');assert.equal(saved,0);
+});
+
+test('verified customers use an authorization bearer instead of the legacy order code',()=>{
+ const h=harness();h.context.sessionStorage.getItem=key=>key==='udyam_customer_token'?'uoc_customer-session':null;
+ const headers=h.run('orderHeaders("UO-example")');assert.equal(headers.Authorization,'Bearer uoc_customer-session');assert.equal(headers['x-order-token'],undefined);
+});
+
+test('OIDC staff tokens use the standard authorization header',()=>{
+ const h=harness();h.nodes.get('adminToken').value='eyJheader.payload.signature';const headers=h.run('operatorHeaders()');
+ assert.equal(headers.Authorization,'Bearer eyJheader.payload.signature');assert.equal(headers['x-admin-token'],undefined);
 });
