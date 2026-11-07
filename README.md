@@ -2,7 +2,9 @@
 
 MSME service discovery and onboarding, developed by **Team NTG, VIT Vellore** for Airtel SYNC 2026.
 
-[Provided recording](https://drive.google.com/file/d/1oh0mNItb71vjEhhgsLmN4iJyzLmT2MmL/view) | [Architecture](ARCHITECTURE.md) | [Privacy and security](PRIVACY.md)
+[Provided recording](https://drive.google.com/file/d/1oh0mNItb71vjEhhgsLmN4iJyzLmT2MmL/view) | [Architecture](ARCHITECTURE.md) | [Privacy and security](PRIVACY.md) | [Pilot deployment](PRODUCTION.md)
+
+The public interface begins with a concise product explanation, then separates business-customer and employee/partner sign-in. Customer navigation is prerequisite-gated; signed-in customers receive a next-action dashboard. The staff workspace filters queues and controls by OIDC role. See [FRONTEND_PLAN.md](FRONTEND_PLAN.md).
 
 UdyamOne helps business owners keep suitable existing services, identify missing capabilities and review a clear service plan before accepting an order. It connects planning, verification, service tracking and consent-based recovery in one browser application.
 
@@ -22,7 +24,7 @@ Staff tools support partner attribution, blocker-based assistance, intervention 
 
 [Download the architecture diagram](docs/NTG_VITVELLORE_Architecture.pdf)
 
-The application uses a static browser interface, one FastAPI service and SQLite. Planning, verification, activation, assistance and provider adapters are modules within that service. The V3 planner and its explanations are deterministic. Optional GenAI explanations are available on the legacy quote path and cannot set products or prices.
+The application uses a static browser interface and one modular FastAPI service. Local demonstrations use SQLite; the secure pilot configuration uses PostgreSQL with Alembic migrations. Planning, verification, activation, assistance and provider adapters are modules within that service. The V3 planner and its explanations are deterministic. Optional GenAI explanations are available on the legacy quote path and cannot set products or prices.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for component responsibilities, data flows and integration boundaries.
 
@@ -56,15 +58,21 @@ On Linux or macOS:
 PORT=8001 bash run.sh
 ```
 
-Open <http://127.0.0.1:8001>. The scripts create a virtual environment, install dependencies and start the local server. RapidOCR is included; a separate Tesseract installation is optional.
+Open <http://127.0.0.1:8001>. The scripts create a virtual environment, install hash-locked dependencies and start the local server. RapidOCR is included; a separate Tesseract installation is optional.
 
-Copy `.env.example` to `.env` if configuration is needed. The launch scripts load that file. A direct Uvicorn invocation must include `--env-file .env` to load it.
+Copy `.env.example` to `.env` for the synthetic local demo. Demo mode and mock KYC are explicit opt-ins rather than insecure defaults. The launch scripts load that file. A direct Uvicorn invocation must include `--env-file .env` to load it.
 
 ## Interface and access
 
 The customer journey is **Your needs -> Your plan -> Verification -> Track services**. Settings contains language, optional voice playback and staff access. The advisor supports English, Hindi, Tamil and Telugu; the detailed V3 planning, tracking and staff panels remain English. Microphone transcripts can be reviewed before sending.
 
-New orders receive a private access token; its hash is stored in SQLite. Staff APIs use `ADMIN_TOKEN`. The default `UDYAM_DEMO=true` configuration permits local demonstration controls and can allow staff access without a token. Keep this mode bound to localhost. Setting a staff token does not, by itself, make the application production-ready.
+Local demo orders receive a private access token whose hash is stored server-side. The pilot foundation adds phone OTP customer sessions and signed OIDC staff tokens with role claims. The shared `ADMIN_TOKEN` remains only for local/staging compatibility and is rejected as a production identity mechanism. Demo mode permits local rehearsal controls and must remain bound to localhost.
+
+## Secure pilot foundation
+
+`compose.production.yaml` provides a non-root, read-only application container and PostgreSQL 17. Production startup fails closed when demo mode, OIDC, customer OTP or database migration settings are unsafe or missing. Customer API responses omit staff evidence; API responses use no-store caching; upload dimensions, request size, OCR concurrency and sensitive endpoint rates are bounded.
+
+This foundation does **not** turn the synthetic catalogue, mock KYC, test payments or manual activation evidence into live services. Configure approved provider contracts before processing real customers. See [PRODUCTION.md](PRODUCTION.md).
 
 ## Integrations
 
@@ -88,7 +96,7 @@ Production deployment requires additional authentication and staff roles, transp
 
 ## Verification
 
-After installing dependencies and supplying the authorised case data and OCR samples:
+After installing `requirements-dev.lock` and supplying the authorised case data and OCR samples:
 
 ```powershell
 .\.venv\Scripts\python.exe -m pytest -q
@@ -104,6 +112,8 @@ Tests cover planning eligibility, budget and dependency checks, order access, bo
 | File or directory | Responsibility |
 | --- | --- |
 | `app.py` | API, access checks, orders and shared storage |
+| `config.py`, `security.py`, `rate_limit.py` | Fail-closed configuration, OIDC/OTP principals, roles and request controls |
+| `db.py`, `migrations/` | SQLite development adapter, PostgreSQL access and Alembic schema |
 | `planner.py`, `engine.py` | Reviewed-needs planning, catalogue rules and quote calculation |
 | `activation.py` | Service tasks, evidence events and recovery support |
 | `kyc.py` | OCR, local registry checks and order-identity binding |

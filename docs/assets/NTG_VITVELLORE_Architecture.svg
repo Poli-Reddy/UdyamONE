@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1860" height="1360" viewBox="0 0 1860 1360" role="img" aria-labelledby="title desc">
 <title id="title">UdyamOne solution architecture - NTG, VIT Vellore</title>
-<desc id="desc">Main components and logical data flows of one FastAPI service, its SQLite and file stores, owner and staff interfaces, optional network helpers and provider adapters. Live Airtel provisioning remains future work.</desc>
+<desc id="desc">Main components and logical data flows of one FastAPI service, PostgreSQL state, customer OTP and OIDC role interfaces, optional helpers and provider adapters. Live Airtel provisioning remains future work.</desc>
 <defs>
 <marker id="arrow-23659A" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#23659A"/></marker>
 <marker id="arrow-B4781B" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#B4781B"/></marker>
@@ -12,7 +12,7 @@
 <rect x="0" y="0" width="1860" height="7" rx="0" fill="#D71920" stroke="none" stroke-width="1.5"/>
 <text x="60" y="43.37646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#D71920">NTG | VIT VELLORE · AIRTEL SYNC 2026</text>
 <text x="60" y="102.5771484375" text-anchor="start" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#172334">UdyamOne · Solution architecture</text>
-<text x="60" y="151.560546875" text-anchor="start" font-family="Arial, sans-serif" font-size="20" font-weight="400" fill="#586678">Main components and data flows of the current V3 prototype</text>
+<text x="60" y="151.560546875" text-anchor="start" font-family="Arial, sans-serif" font-size="20" font-weight="400" fill="#586678">Main components and data flows of the secure pilot foundation</text>
 <polyline points="1480,54 1530,54" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)"/>
 <text x="1545" y="56.284423828125" text-anchor="start" font-family="Arial, sans-serif" font-size="15.5" font-weight="400" fill="#586678">Implemented local flow</text>
 <polyline points="1480,91 1530,91" fill="none" stroke="#B4781B" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-B4781B)" stroke-dasharray="8 5"/>
@@ -20,7 +20,7 @@
 <polyline points="1480,128 1530,128" fill="none" stroke="#7A8490" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-7A8490)" stroke-dasharray="2 5"/>
 <text x="1545" y="130.284423828125" text-anchor="start" font-family="Arial, sans-serif" font-size="15.5" font-weight="400" fill="#586678">Future integration</text>
 <rect x="30" y="361" width="1360" height="847" rx="13" fill="#FFFFFF" stroke="#CCD7E3" stroke-width="1.8"/>
-<text x="750.0" y="393.92041015625" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#23659A">LOCAL DEPLOYMENT · ONE FASTAPI SERVICE + SQLITE / FILES</text>
+<text x="750.0" y="393.92041015625" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#23659A">PILOT DEPLOYMENT · ONE FASTAPI SERVICE + POSTGRESQL</text>
 <polyline points="390,325 390,405" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
 <polyline points="1085,325 1085,405" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
 <polyline points="120,481 120,574" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
@@ -41,19 +41,19 @@
 <polyline points="1360,1026 1438,1026 1438,1138 1470,1138" fill="none" stroke="#7A8490" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-7A8490)" stroke-dasharray="2 5"/>
 <rect x="60" y="199" width="660" height="126" rx="9" fill="#F0F5FA" stroke="#CBD8E5" stroke-width="1.5"/>
 <rect x="61" y="200" width="658" height="4" rx="0" fill="#23659A" stroke="none" stroke-width="1.5"/>
-<text x="78" y="231.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Customer / partner · web or mobile</text>
+<text x="78" y="231.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Public home + customer dashboard · web or mobile</text>
 <text x="78" y="267.886083984375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Needs, reviewed tools, consent, orders and tracking</text>
-<text x="78" y="289.58608398437497" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Four-language advisor; detailed V3 panels are English</text>
-<text x="78" y="311.28608398437495" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Optional browser speech input; text and choice fallback</text>
+<text x="78" y="289.58608398437497" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Phone OTP sessions; prerequisite-gated customer journey</text>
+<text x="78" y="311.28608398437495" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Four-language advisor; detailed planning remains English</text>
 <rect x="810" y="199" width="550" height="126" rx="9" fill="#F0F5FA" stroke="#CBD8E5" stroke-width="1.5"/>
 <rect x="811" y="200" width="548" height="4" rx="0" fill="#23659A" stroke="none" stroke-width="1.5"/>
-<text x="828" y="231.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Staff workspace</text>
-<text x="828" y="267.886083984375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Partner attribution, activation evidence and assistance</text>
-<text x="828" y="289.58608398437497" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Pilot assignments, costs and outcomes</text>
-<text x="828" y="311.28608398437495" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Staff access key stays in page memory</text>
+<text x="828" y="231.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Role-filtered staff workspace</text>
+<text x="828" y="267.886083984375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">OIDC roles gate KYC, activation, billing and analytics</text>
+<text x="828" y="289.58608398437497" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Partner sees only signed referral attribution</text>
+<text x="828" y="311.28608398437495" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Operator evidence is omitted from customer responses</text>
 <rect x="60" y="405" width="1300" height="76" rx="8" fill="#EDF4FA" stroke="#B8CFE1" stroke-width="1.5"/>
 <text x="80" y="439.47265625" text-anchor="start" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#23659A">API + access checks</text>
-<text x="421" y="430.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">app.py · validates requests; checks order tokens / staff access; routes every module below</text>
+<text x="421" y="430.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">app.py · validates requests; checks OTP / OIDC roles; routes every module below</text>
 <text x="421" y="459.6484375" text-anchor="start" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#586678">HTTP / JSON, multipart uploads, static HTML / JS / CSS and provider webhooks</text>
 <rect x="60" y="574" width="280" height="190" rx="9" fill="#FFFFFF" stroke="#D5DEE7" stroke-width="1.5"/>
 <rect x="61" y="575" width="278" height="4" rx="0" fill="#D71920" stroke="none" stroke-width="1.5"/>
@@ -98,11 +98,11 @@
 <text x="78" y="1042.394873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">KYC consent events logged</text>
 <rect x="400" y="862" width="620" height="191" rx="9" fill="#F1F6FA" stroke="#BDD0E1" stroke-width="1.5"/>
 <rect x="401" y="863" width="618" height="4" rx="0" fill="#23659A" stroke="none" stroke-width="1.5"/>
-<text x="418" y="896.47265625" text-anchor="start" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#23659A">SQLite · shared persisted state</text>
-<text x="418" y="929.284423828125" text-anchor="start" font-family="Arial, sans-serif" font-size="15.5" font-weight="400" fill="#586678">orders.db · or a separately configured demo database</text>
-<text x="418" y="967.886083984375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Orders, accepted plans and hashed access tokens</text>
-<text x="418" y="990.886083984375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Activation tasks / events and plan revision history</text>
-<text x="418" y="1013.886083984375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Registry / payment evidence, WhatsApp state and pilot records</text>
+<text x="418" y="896.47265625" text-anchor="start" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#23659A">PostgreSQL · shared persisted state</text>
+<text x="418" y="929.284423828125" text-anchor="start" font-family="Arial, sans-serif" font-size="15.5" font-weight="400" fill="#586678">Alembic migrations · local SQLite compatibility for demos</text>
+<text x="418" y="967.37646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">Orders, accepted plans, customer sessions and OIDC bindings</text>
+<text x="418" y="990.37646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">Activation tasks / events and plan revision history</text>
+<text x="418" y="1013.37646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">Consent, registry/payment evidence, WhatsApp and pilot records</text>
 <rect x="1080" y="862" width="280" height="191" rx="9" fill="#FBFCFE" stroke="#D5DEE7" stroke-width="1.5"/>
 <rect x="1081" y="863" width="278" height="4" rx="0" fill="#23659A" stroke="none" stroke-width="1.5"/>
 <text x="1098" y="894.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Provider adapters</text>
@@ -112,13 +112,13 @@
 <text x="1098" y="998.994873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">WhatsApp: consent + plans</text>
 <text x="1098" y="1020.694873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">No chat orders or payments</text>
 <rect x="60" y="1083" width="280" height="101" rx="8" fill="#F5F7FA" stroke="#D1D9E2" stroke-width="1.5"/>
-<text x="77" y="1111.924560546875" text-anchor="start" font-family="Arial, sans-serif" font-size="20.5" font-weight="700" fill="#172334">Consent log</text>
-<text x="77" y="1140.410791015625" text-anchor="start" font-family="Arial, sans-serif" font-size="14.3" font-weight="400" fill="#586678">consent_log.jsonl</text>
-<text x="77" y="1156.910791015625" text-anchor="start" font-family="Arial, sans-serif" font-size="14.3" font-weight="400" fill="#586678">Order-linked consent metadata</text>
+<text x="77" y="1111.924560546875" text-anchor="start" font-family="Arial, sans-serif" font-size="20.5" font-weight="700" fill="#172334">Consent events</text>
+<text x="77" y="1140.410791015625" text-anchor="start" font-family="Arial, sans-serif" font-size="14.3" font-weight="400" fill="#586678">PostgreSQL audit records</text>
+<text x="77" y="1156.910791015625" text-anchor="start" font-family="Arial, sans-serif" font-size="14.3" font-weight="400" fill="#586678">Purpose, notice, outcome and codes</text>
 <text x="77" y="1173.410791015625" text-anchor="start" font-family="Arial, sans-serif" font-size="14.3" font-weight="400" fill="#586678">No images or registration IDs</text>
 <rect x="400" y="1083" width="960" height="101" rx="8" fill="#F9FAFB" stroke="#D8DEE5" stroke-width="1.5"/>
 <text x="418" y="1113.28857421875" text-anchor="start" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#172334">Controls that protect the decision</text>
-<text x="418" y="1148.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Fresh acceptance for recovery · uploads removed after OCR · order tokens stored as hashes</text>
+<text x="418" y="1148.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Fresh acceptance for recovery · uploads removed after OCR · OTP and OIDC role checks</text>
 <text x="418" y="1170.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Checklist progress is not live activation; pilot assignment does not contact customers.</text>
 <rect x="1470" y="199" width="330" height="219" rx="9" fill="#FFF9EF" stroke="#D4B477" stroke-width="1.5" stroke-dasharray="7 4"/>
 <rect x="1471" y="200" width="328" height="4" rx="0" fill="#B4781B" stroke="none" stroke-width="1.5"/>

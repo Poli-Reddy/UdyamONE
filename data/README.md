@@ -1,18 +1,12 @@
-# Local case data
+# Authorised case data
 
-The public repository does not redistribute the Airtel case study, its data pack or document samples. Obtain the authorised pack through the competition and keep it local.
+The application expects the four organiser-provided synthetic CSV files in this directory:
 
-Place the following files in this directory before starting the application:
+- `product_catalogue.csv` — 25 products, prices, eligibility and dependencies
+- `smb_leads.csv` — 5,000 synthetic leads and funnel outcomes
+- `mock_gstin_registry.csv` — 3,534 synthetic GST registrations
+- `mock_udyam_registry.csv` — 2,723 synthetic Udyam registrations
 
-| File | Used by |
-| --- | --- |
-| `product_catalogue.csv` | Catalogue eligibility, pricing, contracts and dependencies |
-| `smb_leads.csv` | Historical funnel analysis and the assistance propensity model |
-| `mock_gstin_registry.csv` | Local GSTIN verification |
-| `mock_udyam_registry.csv` | Local Udyam verification |
+The data is fictional challenge material, not Airtel operating data or current tariffs. Do not publish or use it as a production commercial source. The full OCR test suite also requires the 47 authorised sample images in `kyc_samples/`.
 
-Preserve the supplied filenames, column names and encodings. `DATA_DIR` can point to another directory containing these files. The default is `data`, relative to the application working directory.
-
-Place the authorised KYC sample PNG files directly in the repository's `kyc_samples/` directory for the OCR examples and full verification tests. Preserve their original `Kxx_...png` filenames. These examples use the fixed `UDYAM_TODAY=2026-07-15` sample date; this is not a live verification date.
-
-The organiser describes the supplied data as synthetic exercise data. Do not substitute real customer documents or treat the catalogue as current Airtel tariffs.
+For fixture date checks set `UDYAM_TODAY=2026-07-15`. Production must omit this override and use the current date.

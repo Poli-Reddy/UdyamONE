@@ -1,30 +1,59 @@
 # Verification record
 
-Reviewed on 7 November 2026 using Windows, Python 3.11.18, FastAPI/SQLite and RapidOCR CPU.
+Environment: Windows, Python 3.11.18, FastAPI, local SQLite and PostgreSQL 17 compatibility review, RapidOCR CPU backend. Automated local order tests use disposable databases. PostgreSQL migrations and the non-root production container were also exercised with disposable audit services.
 
-## Automated checks
+## Results
+
+### Current final review
+
+- The current complete Python suite passed **91/91**, including the 12-applicant OCR answer key and production-foundation controls.
+- The frontend/API contract suite passed **17/17** under Node. Combined inline, Settings and decision JavaScript also passed syntax checking.
+- Real-browser QA used installed Chrome 156, the current FastAPI app and a disposable database. Customer planning/order/tracker, private-code reopening, staff entry, Back-office, assistance simulation, WhatsApp preview, partner QR, activation failure/recovery, standalone K03 KYC, bill extraction and pilot assignment all completed successfully.
+- Desktop and emulated 390×844 mobile views rendered without horizontal document/nav overflow. Chrome's accessibility tree contained no unnamed interactive controls in the reviewed planning form. No JavaScript console exceptions or HTTP responses ≥400 occurred in the complete journey.
+- Settings now contains language, one Voice toggle, privacy and staff access. There is no gender/source/speed selector or Test/Play button. Enabling Voice and changing language generated zero speech requests; advancing to the next real advisor question generated one.
+- A live Tamil neural speech request returned HTTP 200, 22,896 bytes of MP3 audio and `ta-IN-PallaviNeural`. Human listening quality and physical microphone permission still need the pre-demo device check.
+- Recovery price deltas now put the sign before the currency symbol (`-₹100`).
+- Prices remain identified as illustrative at plan review; verification, activation and payment limitations are shown where they affect the customer. This presentation update does not turn the supplied catalogue or simulated integrations into live services.
+
+### Earlier complete review
 
 | Check | Result |
-| --- | --- |
-| Complete Python suite | 84 tests passed |
-| Frontend/API contract suite | 15 tests passed |
-| Publication source check | Application and test files match the tested workspace |
+|---|---|
+| Original baseline before implementation | 32 passed, including the 12-applicant OCR answer key |
+| Targeted backend review: planning, activation, providers, contact validation and staff access | 43 passed |
+| Previous complete suite after demo review | 75 passed |
+| Current complete Python suite | **91 passed** |
+| Legacy scenario lab | 8/8 passed, including 300 generated lead profiles |
+| JavaScript syntax | Extension and combined original/extension scripts both passed `node --check` |
+| Frontend presentation/API contracts | **17 passed** using actual backend response fixtures |
+| Local HTTP workflow | Passed: existing-service reuse, budget blocking, no-purchase outcome, branch failure/isolation, revised recovery acceptance, preserved email progress, WhatsApp preview, zero-effect assistance policy |
+| Static/API serving | `/`, JS, CSS, integration status and OpenAPI returned HTTP 200 |
 
-The Python suite covers catalogue rules, inventory and location scope, budget blocking, order access tokens, KYC consent and identity binding, activation dependencies, recovery acceptance, provider signatures, payment reconciliation, WhatsApp state and assistance records. The frontend suite checks rendering contracts, escaping, access headers, staff entry, preferences and voice fallbacks.
+The extended tests cover scoped quantities and shared subscriptions, catalogue dependencies, missing cost/inventory, GST eligibility, contract deferral, stale quote acceptance, cross-order tokens, task ordering/version/replay handling, branch-specific forecasts, explicit recovery consent, payment-related repricing blocks, bound KYC identity, pilot assignment, raw-body webhook signatures, wrong payment amounts, late payment events, provider timeouts, WhatsApp duplicates and its 24-hour response window.
 
-All automated order tests use disposable databases and consent logs. The organiser-provided case data and OCR samples are required for the complete suite and are not redistributed in the public repository.
+An intermediate run encountered an inaccessible Windows shared pytest temporary directory. `tests/conftest.py` now allocates pytest storage inside its own disposable directory; the affected test and all 35 new tests subsequently passed. SQLite connections now close at the end of each transaction scope, fixing an earlier Windows cleanup lock.
 
-## Browser and voice review
+## Customer-experience fixes from the final review
 
-The recorded local browser review covered the customer planning/order/tracker journey, private-code reopening, staff workspace, assistance simulation, partner attribution, KYC, bill extraction and failure recovery. Desktop and a 390 x 844 mobile viewport were checked. A live Tamil speech request returned MP3 audio.
+- The customer journey is the default. Operations, operator evidence and activation controls require staff workspace entry; sample presets additionally require Test tools.
+- Customer tracking uses readable statuses, location names, grouped services and a clear next step. Internal task IDs and unconfigured checkout controls are absent from the customer renderer.
+- Provider registry controls are staff-only and disabled when the account is missing. Frontend API errors no longer dump validation objects or configuration-variable names into customer messages.
+- Required contact fields validate before submission; the server also rejects whitespace-only names/addresses, invalid phones and malformed emails. Formatted phone numbers normalize consistently.
+- Shared subscriptions select their correct scope automatically. Quantity inputs are separate from their checkbox labels and are disabled for unselected services. Extra service choices are collapsed.
+- Order restoration updates the KYC reference/lane and stores a successfully supplied private access code for that order. Stale responses cannot overwrite a more recent order load.
+- Successful checkout blocks repeated submission of the same accepted plan. A recovery acceptance refreshes the displayed quote and profile as well as the tracker.
+- Staff order retrieval has its own protected endpoint, and partner summary requests forward the staff token correctly.
+- Responsive styles, keyboard focus, field labels and header/nav positioning were verified in real Chrome at desktop and 390×844 mobile dimensions.
+- The refreshed public home, customer/employee sign-in split, OTP customer dashboard, role-filtered staff panels, signed partner referral and prerequisite-gated journey were exercised against the live local API. A final Lighthouse pass reported 1.00 accessibility, best-practices and SEO scores with no listed failures.
+- Hindi, Tamil and Telugu checkout text now explains that existing provider bills remain separate. Customer-facing advisor, verification and footer text in those languages no longer exposes the older implementation descriptions or promises a live timeline. Detailed new plan panels remain English as disclosed in the UI.
 
-That browser review was completed before this documentation/publication pass; it is not a new browser certification. Physical microphone permission and human listening quality should be checked on the demonstration device.
+## Verification limits
 
-## Limits
+- Browser QA used installed headless Chrome through the DevTools protocol because the desktop-browser bridge was unavailable. It exercised rendered DOM interactions, file uploads, accessibility data, desktop/mobile screenshots and live HTTP calls rather than relying only on static syntax checks.
+- No external provider credentials were supplied. Cashfree, Razorpay and Meta adapters were tested with controlled responses; no live call, payment or WhatsApp send occurred.
+- Live Airtel provisioning is not connected. Demo/operator task evidence is not a telecom provider confirmation.
+- The locked, non-root Docker image built successfully (about 348 MB), started read-only against PostgreSQL 17, passed `/api/ready`, rejected anonymous staff access and kept mock KYC disabled in production mode.
+- Online neural speech returned a valid MP3 in the current QA environment. Optional LLM calls were not used.
+- No scale benchmark, security certification, measured business uplift or competition winning probability is claimed.
 
-- Provider adapters were tested with controlled responses. Live Cashfree, Razorpay and Meta account acceptance tests remain outstanding.
-- Airtel provisioning is not connected. Operator evidence does not certify telecom activation.
-- No production load benchmark, independent penetration test, compliance certification or measured business uplift is claimed.
-- The current test environment reports one Starlette/HTTPX deprecation warning; the suite completes successfully.
-
-Production requirements are documented in [PRIVACY.md](PRIVACY.md) and [INTEGRATIONS.md](INTEGRATIONS.md).
+FastAPI's TestClient emitted one dependency deprecation warning concerning its current HTTPX integration. Pytest also could not write its optional cache in the synced workspace. Neither warning affected the passing tests; no application failure was hidden or skipped.

@@ -1,6 +1,6 @@
 # Solution architecture
 
-UdyamOne is a modular FastAPI application with a static browser interface and a shared SQLite database. The diagram describes the implemented prototype and distinguishes optional external connections from future telecom provisioning.
+UdyamOne is a modular FastAPI application with a static browser interface. Local demonstrations use SQLite; the secure pilot configuration uses PostgreSQL and Alembic migrations. The diagram describes the case prototype and distinguishes optional external connections from future telecom provisioning.
 
 ![UdyamOne solution architecture - NTG, VIT Vellore](docs/assets/NTG_VITVELLORE_Architecture.svg)
 
@@ -11,14 +11,14 @@ UdyamOne is a modular FastAPI application with a static browser interface and a 
 | Component | Responsibility |
 | --- | --- |
 | Browser application | Customer needs, reviewed inventory, consent, order tracking and staff workspace |
-| API and access checks | Request validation, order-token checks, staff authorization and module routing |
+| API and access checks | Request validation, customer OTP sessions, OIDC staff roles, local order-token compatibility and module routing |
 | Needs planner | Catalogue eligibility, product dependencies, scoped quantities and 12-month new-charge comparison |
 | Quote and order handling | Server recomputation, plan fingerprint validation, acceptance and task creation |
 | OCR and KYC | Candidate bill fields, document checks and accepted-order identity binding |
 | Activation and recovery | Service/location dependencies, versioned evidence events and revised-plan acceptance |
 | Assistance and pilot | Blocker routing, propensity-based analysis, assumed intervention effects and recorded outcomes |
 | Provider adapters | Authenticated requests, signature validation, scoped evidence and reconciliation |
-| SQLite and consent log | Accepted plans, order data, tasks, integration state and purpose-specific consent metadata |
+| PostgreSQL / local SQLite | Accepted plans, order data, tasks, integration state, authentication state and purpose-specific consent metadata |
 
 ## Main data flows
 
@@ -31,9 +31,9 @@ UdyamOne is a modular FastAPI application with a static browser interface and a 
 
 ## Storage and trust boundaries
 
-`orders.db` holds business/contact fields, accepted plans, task and revision history, payment/registry evidence, WhatsApp session state and pilot records. A separate JSONL file stores KYC consent metadata and finding codes. Order-linked logs are pseudonymous rather than anonymous.
+PostgreSQL is the pilot system of record for business/contact fields, accepted plans, task and revision history, payment/registry evidence, WhatsApp state, authentication and consent events. Local demos may use `orders.db` plus a compatibility JSONL consent log. Order-linked records are pseudonymous rather than anonymous.
 
-New customer orders use bearer access tokens stored as SHA-256 hashes on the server. Staff access uses `ADMIN_TOKEN`; production account authentication and role-based authorization remain deployment requirements. Demo mode permits local access exceptions and must not be exposed publicly.
+The pilot foundation supports phone-OTP customer bearer sessions and OIDC staff bearer tokens with role checks. Local demo orders retain random access tokens stored as SHA-256 hashes; `ADMIN_TOKEN` is local/staging compatibility only. Production refuses demo mode, shared staff-token authentication, mock KYC and non-PostgreSQL storage.
 
 The core deployment is one application, not independent microservices. OCR is local. Optional Microsoft speech and browser speech recognition cross network boundaries. Anthropic explanations are restricted to approved quote facts on the legacy quote path; the V3 reviewed-context path is deterministic.
 

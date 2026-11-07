@@ -15,7 +15,7 @@ Uploads have 8 MB limits and image checks. Temporary image files are removed aft
 
 ## 3. Access and application security
 
-New orders receive random access tokens; SQLite stores SHA-256 hashes and the browser holds tokens in session storage. Staff keys remain in page memory; ADMIN_TOKEN is required outside demo mode. Demo access exceptions require localhost-only use. Input validation, parameterized SQL, escaped dynamic output, security headers and order-bound KYC reduce unauthorized access and injection risks.
+Local demo orders receive random access tokens stored as SHA-256 hashes. The pilot foundation adds phone-OTP customer sessions and OIDC staff tokens with role claims; the shared ADMIN_TOKEN is not accepted as a production identity design. Customer responses omit operator evidence. Input validation, parameterized SQL, request limits, escaped dynamic output, security headers and order-bound KYC reduce unauthorized access and injection risks.
 
 ## 4. Transaction and integration integrity
 
@@ -27,4 +27,4 @@ Cashfree receives the registration fields needed for a consented lookup; only sc
 
 ## 6. Retention, rights and production readiness
 
-WhatsApp stores phone/session state while requesting consent; business answers follow YES. STOP clears the session, and inactive sessions are removed on a later inbound request after 24 hours. Receipts persist for deduplication. Other records have no automated retention schedule. The app does not encrypt SQLite or consent files, and the local demo uses HTTP. Production requires HTTPS, encryption, managed identities and staff roles, rate limits, secret rotation, audit/incident handling and tested backups. Define retention, correction, withdrawal and deletion across records, backups and providers; appoint accountable contacts and validate processor contracts and notices. This design is not a compliance certification.
+WhatsApp stores phone/session state while requesting consent; business answers follow YES. STOP clears the session, and inactive sessions are removed on a later inbound request after 24 hours. Receipts persist for deduplication. Pilot consent events are stored in PostgreSQL; other records still need an approved automated retention schedule. Production deployment additionally requires gateway TLS, managed encryption keys, distributed limits, secret rotation, immutable audit export, incident handling and tested backup restoration. Define correction, withdrawal and deletion across records, backups and providers; appoint accountable contacts and validate processor contracts and notices. This design is not a compliance certification.
