@@ -82,6 +82,19 @@ def test_free_text_intent_parser():
     assert set(parsed["needs"]) == {"cctv", "whatsapp"}
     assert parsed["missing"] == ["sites"]
 
+    compact = engine.parse_intent("I run a small kirana shop with 2 people in Hyderabad")
+    assert compact["profile"] == {
+        "employees": 2,
+        "sites": 1,
+        "tier": 1,
+        "type": "retail",
+    }
+    assert compact["missing"] == ["gstin", "needs"]
+
+    telugu = engine.parse_intent("నేను హైదరాబాద్‌లో 2 మందితో చిన్న కిరాణా దుకాణం నడుపుతున్నాను")
+    assert telugu["profile"] == compact["profile"]
+    assert telugu["missing"] == ["gstin", "needs"]
+
 
 def test_activated_tracker_marks_all_stages_done():
     q = dict(items=[dict(days=5)])

@@ -526,6 +526,44 @@ _WORD_NUM = {
     "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
 }
 
+_INTENT_REPLACEMENTS = {
+    # Hindi
+    "जीएसटी नहीं है": "no gst", "जीएसटी नहीं": "no gst", "जीएसटी": "gst",
+    "हैदराबाद": "hyderabad", "बेंगलुरु": "bengaluru", "बैंगलोर": "bangalore",
+    "किराना": "kirana", "दुकानों": "shops", "दुकान": "shop",
+    "कर्मचारियों": "employees", "कर्मचारी": "employees", "लोगों": "people", "लोग": "people",
+    "एक": "one", "दो": "two", "तीन": "three", "चार": "four", "पांच": "five", "छह": "six",
+    # Telugu
+    "జీఎస్టీ లేదు": "no gst", "జిఎస్టి లేదు": "no gst", "జీఎస్టీ": "gst", "జిఎస్టి": "gst",
+    "హైదరాబాద్": "hyderabad", "బెంగళూరు": "bengaluru",
+    "కిరాణా": "kirana", "దుకాణాలు": "shops", "దుకాణం": "shop",
+    "ఉద్యోగులు": "employees", "మందితో": "people", "మంది": "people",
+    "ఒకటి": "one", "ఒక": "one", "రెండు": "two", "మూడు": "three", "నాలుగు": "four", "ఐదు": "five", "ఆరు": "six",
+    # Tamil
+    "ஜிஎஸ்டி இல்லை": "no gst", "ஜிஎஸ்டி": "gst",
+    "ஹைதராபாத்": "hyderabad", "பெங்களூரு": "bengaluru",
+    "மளிகை": "kirana", "கடைகள்": "shops", "கடை": "shop",
+    "பணியாளர்கள்": "employees", "பேருடன்": "people", "பேர்": "people",
+    "ஒன்று": "one", "ஒரு": "one", "இரண்டு": "two", "மூன்று": "three", "நான்கு": "four", "ஐந்து": "five", "ஆறு": "six",
+}
+
+_TIER_ONE_CITIES = (
+    "hyderabad", "delhi", "new delhi", "mumbai", "bengaluru", "bangalore",
+    "chennai", "kolkata", "pune", "ahmedabad", "gurugram", "gurgaon", "noida",
+)
+_TIER_TWO_CITIES = (
+    "jaipur", "lucknow", "indore", "coimbatore", "kochi", "nagpur", "surat",
+    "vadodara", "chandigarh", "bhubaneswar", "visakhapatnam", "vizag", "mysuru", "mysore",
+)
+
+
+def _intent_text(value: Any) -> str:
+    """Normalise supported advisor speech without sending it to an LLM."""
+    text = str(value).lower()
+    for source, target in sorted(_INTENT_REPLACEMENTS.items(), key=lambda item: -len(item[0])):
+        text = text.replace(source, f" {target} ")
+    return _s(text)
+
 
 def _number_before(text: str, words: str) -> int | None:
     m = re.search(rf"(\d{{1,4}}|" + "|".join(_WORD_NUM) + rf")\s*(?:{words})\b", text, re.I)
@@ -541,10 +579,10 @@ def parse_intent(text: str) -> dict:
     This is deliberately rules-based (no hallucination).  Optional LLM parsing
     can be layered on top, but the result must still pass these validators.
     """
-    t = " " + _s(text) + " "
+    t = " " + _intent_text(text) + " "
     found: dict[str, Any] = {}
     if not t.strip():
-        return dict(profile=found, needs=[], missing=["type", "employees", "sites", "tier", "gstin"])
+        return dict(profile=found, needs=[], missing=["type", "employees", "sites", "tier", "gstin", "needs"])
 
     emp = (
         _number_before(t, "employees?|people|staff|persons|workers|team members|headcount")
@@ -560,11 +598,19 @@ def parse_intent(text: str) -> dict:
         found["sites"] = 3
     elif "single site" in t or "one shop" in t or "one store" in t:
         found["sites"] = 1
+    elif re.search(r"\b(shop|store|site|location|outlet)\b", t) and not re.search(r"\b(shops|stores|sites|locations|outlets)\b", t):
+        # A singular shop description such as "I run a small kirana shop"
+        # answers the location question even when the owner omits "one".
+        found["sites"] = 1
 
     if re.search(r"\btier\s*2\b|\btier two\b|\btier-2\b", t):
         found["tier"] = 2
     elif re.search(r"\btier\s*1\b|\btier one\b|\btier-1\b|\bmetro\b", t):
         found["tier"] = 1
+    elif any(re.search(rf"\b{re.escape(city)}\b", t) for city in _TIER_ONE_CITIES):
+        found["tier"] = 1
+    elif any(re.search(rf"\b{re.escape(city)}\b", t) for city in _TIER_TWO_CITIES):
+        found["tier"] = 2
 
     if re.search(r"\b(no|without|not have|don t have|do not have)\s+gst", t) or "gst free" in t or "gst-free" in t:
         found["gstin"] = False
@@ -594,4 +640,6 @@ def parse_intent(text: str) -> dict:
         needs.append("fibre")
 
     missing = [k for k in ("type", "employees", "sites", "tier", "gstin") if k not in found]
+    if not needs:
+        missing.append("needs")
     return dict(profile=found, needs=needs, missing=missing)
