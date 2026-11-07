@@ -91,9 +91,15 @@ def test_free_text_intent_parser():
     }
     assert compact["missing"] == ["gstin", "needs"]
 
-    telugu = engine.parse_intent("నేను హైదరాబాద్‌లో 2 మందితో చిన్న కిరాణా దుకాణం నడుపుతున్నాను")
-    assert telugu["profile"] == compact["profile"]
-    assert telugu["missing"] == ["gstin", "needs"]
+    native_descriptions = [
+        "मैं हैदराबाद में 2 लोगों के साथ छोटी किराना दुकान चलाता हूं",
+        "நான் ஹைதராபாத்தில் 2 பேருடன் ஒரு சிறிய மளிகைக் கடை நடத்துகிறேன்",
+        "నేను హైదరాబాద్‌లో 2 మందితో చిన్న కిరాణా దుకాణం నడుపుతున్నాను",
+    ]
+    for description in native_descriptions:
+        native = engine.parse_intent(description)
+        assert native["profile"] == compact["profile"]
+        assert native["missing"] == ["gstin", "needs"]
 
 
 def test_activated_tracker_marks_all_stages_done():
