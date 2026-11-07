@@ -1,0 +1,47 @@
+flowchart TB
+  OWNER["Customer / partner browser<br/>Needs, reviewed inventory, consent, tracking"]
+  STAFF["Staff workspace<br/>Evidence, partner attribution, pilot outcomes"]
+  subgraph LOCAL["One FastAPI service with local SQLite / files"]
+    API["API + access checks · app.py<br/>Validation, order tokens, staff access, routing"]
+    PLAN["V3 needs planner · planner.py<br/>Keep / Add / Replace Later; catalogue dependencies"]
+    ORDER["Quote acceptance + order<br/>Server recomputation, fingerprint, owner acceptance"]
+    ACT["Activation + recovery<br/>Service dependencies, versioned events, preserved progress"]
+    OPS["Assistance + pilot<br/>Blocker routing; propensity separate from assumed effects"]
+    KYC["Bill OCR + Smart KYC<br/>Owner reviews bill facts; documents bind to the order"]
+    DB[("SQLite<br/>Orders, accepted plans, tasks/events, revisions,<br/>provider state, WhatsApp state, pilot records")]
+    LOG["Consent JSONL<br/>Order-linked purpose / lane / verdict / codes; no images"]
+    ADAPT["Provider adapters<br/>HTTP/auth, signatures, deduplication, scoped evidence"]
+    CAT["Synthetic product catalogue CSV"]
+    REG["Mock GST / Udyam CSVs"]
+    LEADS["5,000 synthetic leads → Random Forest propensity"]
+    API <--> PLAN
+    API <--> KYC
+    API <--> ADAPT
+    PLAN -->|"plan + explicit owner acceptance"| ORDER
+    ORDER -->|"seed service tasks"| ACT
+    ACT -->|"failure: re-plan; require fresh acceptance"| PLAN
+    ACT -->|"actual blockers"| OPS
+    ORDER <--> DB
+    ACT <--> DB
+    OPS <--> DB
+    KYC -->|"order-bound status / verdict"| DB
+    KYC -->|"consent events"| LOG
+    ADAPT <--> DB
+    CAT --> PLAN
+    REG --> KYC
+    LEADS --> OPS
+  end
+  OWNER <-->|"HTTP / JSON; uploads and responses"| API
+  STAFF <-->|"protected staff requests"| API
+  HELP["Optional Microsoft TTS + device fallback<br/>Optional Anthropic on legacy quote path only<br/>V3 plan explanations are deterministic"]
+  EXT["Provider accounts / live tests pending<br/>Cashfree registry; Razorpay TEST checkout;<br/>Meta signed WhatsApp messages and replies"]
+  FUTURE["Future Airtel provisioning<br/>Approved API contract and product mappings required"]
+  API <-.-> HELP
+  ADAPT <-.-> EXT
+  ADAPT -.-> FUTURE
+  classDef local fill:#ffffff,stroke:#23659a,color:#172334;
+  classDef optional fill:#fff9ef,stroke:#b4781b,stroke-dasharray:7 4,color:#172334;
+  classDef future fill:#f2f4f6,stroke:#7a8490,stroke-dasharray:2 5,color:#586678;
+  class API,PLAN,ORDER,ACT,OPS,KYC,DB,LOG,ADAPT local;
+  class HELP,EXT optional;
+  class FUTURE future;

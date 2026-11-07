@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1860" height="1360" viewBox="0 0 1860 1360" role="img" aria-labelledby="title desc">
+<title id="title">UdyamOne solution architecture - NTG, VIT Vellore</title>
+<desc id="desc">Main components and logical data flows of one FastAPI service, its SQLite and file stores, owner and staff interfaces, optional network helpers and provider adapters. Live Airtel provisioning remains future work.</desc>
+<defs>
+<marker id="arrow-23659A" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#23659A"/></marker>
+<marker id="arrow-B4781B" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#B4781B"/></marker>
+<marker id="arrow-7A8490" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7A8490"/></marker>
+<marker id="arrow-D71920" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#D71920"/></marker>
+</defs>
+<rect x="0" y="0" width="1860" height="1360" rx="0" fill="#F8FAFC" stroke="none" stroke-width="1.5"/>
+<rect x="0" y="0" width="1860" height="7" rx="0" fill="#D71920" stroke="none" stroke-width="1.5"/>
+<text x="60" y="43.37646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17" font-weight="700" fill="#D71920">NTG | VIT VELLORE · AIRTEL SYNC 2026</text>
+<text x="60" y="102.5771484375" text-anchor="start" font-family="Arial, sans-serif" font-size="42" font-weight="700" fill="#172334">UdyamOne · Solution architecture</text>
+<text x="60" y="151.560546875" text-anchor="start" font-family="Arial, sans-serif" font-size="20" font-weight="400" fill="#586678">Main components and data flows of the current V3 prototype</text>
+<polyline points="1480,54 1530,54" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)"/>
+<text x="1545" y="56.284423828125" text-anchor="start" font-family="Arial, sans-serif" font-size="15.5" font-weight="400" fill="#586678">Implemented local flow</text>
+<polyline points="1480,91 1530,91" fill="none" stroke="#B4781B" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-B4781B)" stroke-dasharray="8 5"/>
+<text x="1545" y="93.284423828125" text-anchor="start" font-family="Arial, sans-serif" font-size="15.5" font-weight="400" fill="#586678">Optional network / account path</text>
+<polyline points="1480,128 1530,128" fill="none" stroke="#7A8490" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-7A8490)" stroke-dasharray="2 5"/>
+<text x="1545" y="130.284423828125" text-anchor="start" font-family="Arial, sans-serif" font-size="15.5" font-weight="400" fill="#586678">Future integration</text>
+<rect x="30" y="361" width="1360" height="847" rx="13" fill="#FFFFFF" stroke="#CCD7E3" stroke-width="1.8"/>
+<text x="750.0" y="393.92041015625" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#23659A">LOCAL DEPLOYMENT · ONE FASTAPI SERVICE + SQLITE / FILES</text>
+<polyline points="390,325 390,405" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
+<polyline points="1085,325 1085,405" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
+<polyline points="120,481 120,574" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
+<polyline points="60,445 42,445 42,956 60,956" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
+<polyline points="340,652 400,652" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)"/>
+<polyline points="680,652 740,652" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)"/>
+<polyline points="1020,652 1080,652" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)"/>
+<polyline points="880,574 880,535 250,535 250,574" fill="none" stroke="#D71920" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-D71920)"/>
+<polyline points="540,764 540,862" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
+<polyline points="880,764 880,862" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
+<polyline points="1220,764 1220,811 984,811 984,862" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
+<polyline points="340,956 400,956" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)"/>
+<polyline points="1080,956 1020,956" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
+<polyline points="200,1053 200,1083" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)"/>
+<polyline points="1360,445 1410,445 1410,903 1360,903" fill="none" stroke="#23659A" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-23659A)" marker-start="url(#arrow-23659A)"/>
+<polyline points="1360,425 1438,425 1438,301 1470,301" fill="none" stroke="#B4781B" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-B4781B)" marker-start="url(#arrow-B4781B)" stroke-dasharray="8 5"/>
+<polyline points="1360,972 1470,972" fill="none" stroke="#B4781B" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-B4781B)" marker-start="url(#arrow-B4781B)" stroke-dasharray="8 5"/>
+<polyline points="1360,1026 1438,1026 1438,1138 1470,1138" fill="none" stroke="#7A8490" stroke-width="2.0" stroke-linejoin="round" marker-end="url(#arrow-7A8490)" stroke-dasharray="2 5"/>
+<rect x="60" y="199" width="660" height="126" rx="9" fill="#F0F5FA" stroke="#CBD8E5" stroke-width="1.5"/>
+<rect x="61" y="200" width="658" height="4" rx="0" fill="#23659A" stroke="none" stroke-width="1.5"/>
+<text x="78" y="231.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Customer / partner · web or mobile</text>
+<text x="78" y="267.886083984375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Needs, reviewed tools, consent, orders and tracking</text>
+<text x="78" y="289.58608398437497" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Four-language advisor; detailed V3 panels are English</text>
+<text x="78" y="311.28608398437495" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Optional browser speech input; text and choice fallback</text>
+<rect x="810" y="199" width="550" height="126" rx="9" fill="#F0F5FA" stroke="#CBD8E5" stroke-width="1.5"/>
+<rect x="811" y="200" width="548" height="4" rx="0" fill="#23659A" stroke="none" stroke-width="1.5"/>
+<text x="828" y="231.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Staff workspace</text>
+<text x="828" y="267.886083984375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Partner attribution, activation evidence and assistance</text>
+<text x="828" y="289.58608398437497" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Pilot assignments, costs and outcomes</text>
+<text x="828" y="311.28608398437495" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Staff access key stays in page memory</text>
+<rect x="60" y="405" width="1300" height="76" rx="8" fill="#EDF4FA" stroke="#B8CFE1" stroke-width="1.5"/>
+<text x="80" y="439.47265625" text-anchor="start" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#23659A">API + access checks</text>
+<text x="421" y="430.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">app.py · validates requests; checks order tokens / staff access; routes every module below</text>
+<text x="421" y="459.6484375" text-anchor="start" font-family="Arial, sans-serif" font-size="16" font-weight="400" fill="#586678">HTTP / JSON, multipart uploads, static HTML / JS / CSS and provider webhooks</text>
+<rect x="60" y="574" width="280" height="190" rx="9" fill="#FFFFFF" stroke="#D5DEE7" stroke-width="1.5"/>
+<rect x="61" y="575" width="278" height="4" rx="0" fill="#D71920" stroke="none" stroke-width="1.5"/>
+<text x="78" y="606.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Needs planner</text>
+<text x="78" y="635.33798828125" text-anchor="start" font-family="Arial, sans-serif" font-size="14.2" font-weight="400" fill="#586678">planner.py + engine.py</text>
+<text x="78" y="667.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Keep / Add / Replace Later</text>
+<text x="78" y="689.2948730468751" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Eligibility and dependencies</text>
+<text x="78" y="710.994873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Compare 12-month new costs</text>
+<text x="78" y="732.694873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Reads product catalogue CSV</text>
+<rect x="400" y="574" width="280" height="190" rx="9" fill="#FFFFFF" stroke="#D5DEE7" stroke-width="1.5"/>
+<rect x="401" y="575" width="278" height="4" rx="0" fill="#D71920" stroke="none" stroke-width="1.5"/>
+<text x="418" y="606.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Quote + order</text>
+<text x="418" y="635.33798828125" text-anchor="start" font-family="Arial, sans-serif" font-size="14.2" font-weight="400" fill="#586678">app.py</text>
+<text x="418" y="667.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Recompute plan + fingerprint</text>
+<text x="418" y="689.2948730468751" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Require owner acceptance</text>
+<text x="418" y="710.994873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Create order + private token</text>
+<text x="418" y="732.694873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Seed service activation tasks</text>
+<rect x="740" y="574" width="280" height="190" rx="9" fill="#FFFFFF" stroke="#D5DEE7" stroke-width="1.5"/>
+<rect x="741" y="575" width="278" height="4" rx="0" fill="#D71920" stroke="none" stroke-width="1.5"/>
+<text x="758" y="606.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Activation + recovery</text>
+<text x="758" y="635.33798828125" text-anchor="start" font-family="Arial, sans-serif" font-size="14.2" font-weight="400" fill="#586678">activation.py + app.py</text>
+<text x="758" y="667.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Service / site dependencies</text>
+<text x="758" y="689.2948730468751" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Versioned, deduplicated events</text>
+<text x="758" y="710.994873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Keep independent progress</text>
+<text x="758" y="732.694873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Failures trigger a new quote</text>
+<rect x="1080" y="574" width="280" height="190" rx="9" fill="#FFFFFF" stroke="#D5DEE7" stroke-width="1.5"/>
+<rect x="1081" y="575" width="278" height="4" rx="0" fill="#D71920" stroke="none" stroke-width="1.5"/>
+<text x="1098" y="606.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Assistance + pilot</text>
+<text x="1098" y="635.33798828125" text-anchor="start" font-family="Arial, sans-serif" font-size="14.2" font-weight="400" fill="#586678">assistance.py + app.py</text>
+<text x="1098" y="667.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">5,000 leads → RF propensity</text>
+<text x="1098" y="689.2948730468751" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Blocker → skill / channel</text>
+<text x="1098" y="710.994873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Assumed effects + pilot data</text>
+<text x="1098" y="732.694873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">No automatic staff dispatch</text>
+<rect x="60" y="862" width="280" height="191" rx="9" fill="#FFFFFF" stroke="#D5DEE7" stroke-width="1.5"/>
+<rect x="61" y="863" width="278" height="4" rx="0" fill="#D71920" stroke="none" stroke-width="1.5"/>
+<text x="78" y="894.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Bill OCR + Smart KYC</text>
+<text x="78" y="923.33798828125" text-anchor="start" font-family="Arial, sans-serif" font-size="14.2" font-weight="400" fill="#586678">kyc.py + planner.bill_draft</text>
+<text x="78" y="955.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Bill fields → owner review</text>
+<text x="78" y="977.2948730468751" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">KYC verdict → bound order</text>
+<text x="78" y="998.994873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Mock GST / Udyam CSVs</text>
+<text x="78" y="1020.694873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Temporary images deleted</text>
+<text x="78" y="1042.394873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">KYC consent events logged</text>
+<rect x="400" y="862" width="620" height="191" rx="9" fill="#F1F6FA" stroke="#BDD0E1" stroke-width="1.5"/>
+<rect x="401" y="863" width="618" height="4" rx="0" fill="#23659A" stroke="none" stroke-width="1.5"/>
+<text x="418" y="896.47265625" text-anchor="start" font-family="Arial, sans-serif" font-size="24" font-weight="700" fill="#23659A">SQLite · shared persisted state</text>
+<text x="418" y="929.284423828125" text-anchor="start" font-family="Arial, sans-serif" font-size="15.5" font-weight="400" fill="#586678">orders.db · or a separately configured demo database</text>
+<text x="418" y="967.886083984375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Orders, accepted plans and hashed access tokens</text>
+<text x="418" y="990.886083984375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Activation tasks / events and plan revision history</text>
+<text x="418" y="1013.886083984375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.7" font-weight="400" fill="#172334">Registry / payment evidence, WhatsApp state and pilot records</text>
+<rect x="1080" y="862" width="280" height="191" rx="9" fill="#FBFCFE" stroke="#D5DEE7" stroke-width="1.5"/>
+<rect x="1081" y="863" width="278" height="4" rx="0" fill="#23659A" stroke="none" stroke-width="1.5"/>
+<text x="1098" y="894.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Provider adapters</text>
+<text x="1098" y="923.33798828125" text-anchor="start" font-family="Arial, sans-serif" font-size="14.2" font-weight="400" fill="#586678">providers.py / integrations.py</text>
+<text x="1098" y="955.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">HTTP / auth / scoped evidence</text>
+<text x="1098" y="977.2948730468751" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Signed callbacks + dedupe</text>
+<text x="1098" y="998.994873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">WhatsApp: consent + plans</text>
+<text x="1098" y="1020.694873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">No chat orders or payments</text>
+<rect x="60" y="1083" width="280" height="101" rx="8" fill="#F5F7FA" stroke="#D1D9E2" stroke-width="1.5"/>
+<text x="77" y="1111.924560546875" text-anchor="start" font-family="Arial, sans-serif" font-size="20.5" font-weight="700" fill="#172334">Consent log</text>
+<text x="77" y="1140.410791015625" text-anchor="start" font-family="Arial, sans-serif" font-size="14.3" font-weight="400" fill="#586678">consent_log.jsonl</text>
+<text x="77" y="1156.910791015625" text-anchor="start" font-family="Arial, sans-serif" font-size="14.3" font-weight="400" fill="#586678">Order-linked consent metadata</text>
+<text x="77" y="1173.410791015625" text-anchor="start" font-family="Arial, sans-serif" font-size="14.3" font-weight="400" fill="#586678">No images or registration IDs</text>
+<rect x="400" y="1083" width="960" height="101" rx="8" fill="#F9FAFB" stroke="#D8DEE5" stroke-width="1.5"/>
+<text x="418" y="1113.28857421875" text-anchor="start" font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#172334">Controls that protect the decision</text>
+<text x="418" y="1148.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Fresh acceptance for recovery · uploads removed after OCR · order tokens stored as hashes</text>
+<text x="418" y="1170.594873046875" text-anchor="start" font-family="Arial, sans-serif" font-size="17.3" font-weight="400" fill="#172334">Checklist progress is not live activation; pilot assignment does not contact customers.</text>
+<rect x="1470" y="199" width="330" height="219" rx="9" fill="#FFF9EF" stroke="#D4B477" stroke-width="1.5" stroke-dasharray="7 4"/>
+<rect x="1471" y="200" width="328" height="4" rx="0" fill="#B4781B" stroke="none" stroke-width="1.5"/>
+<text x="1488" y="231.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Optional online helpers</text>
+<text x="1488" y="260.33798828125" text-anchor="start" font-family="Arial, sans-serif" font-size="14.2" font-weight="400" fill="#586678">Network availability required</text>
+<text x="1488" y="292.37646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">Microsoft TTS; device fallback</text>
+<text x="1488" y="314.07646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">Optional Anthropic explanation</text>
+<text x="1488" y="335.77646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">on legacy quotes only</text>
+<text x="1488" y="357.47646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">Quote facts only; output guarded</text>
+<text x="1488" y="379.17646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">V3 plan text is deterministic.</text>
+<rect x="1470" y="782" width="330" height="239" rx="9" fill="#FFF9EF" stroke="#D4B477" stroke-width="1.5" stroke-dasharray="7 4"/>
+<rect x="1471" y="783" width="328" height="4" rx="0" fill="#B4781B" stroke="none" stroke-width="1.5"/>
+<text x="1488" y="814.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Provider accounts pending</text>
+<text x="1488" y="843.33798828125" text-anchor="start" font-family="Arial, sans-serif" font-size="14.2" font-weight="400" fill="#586678">Adapters coded; live tests pending</text>
+<text x="1488" y="875.37646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">Cashfree: registry evidence</text>
+<text x="1488" y="897.07646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">Razorpay: TEST payment links</text>
+<text x="1488" y="918.77646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">and signed payment callbacks</text>
+<text x="1488" y="940.47646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">Meta: signed WhatsApp messages</text>
+<text x="1488" y="962.17646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">and replies; shared planner</text>
+<text x="1488" y="983.87646484375" text-anchor="start" font-family="Arial, sans-serif" font-size="17.0" font-weight="400" fill="#172334">No live provider success claimed.</text>
+<rect x="1470" y="1093" width="330" height="110" rx="9" fill="#F2F4F6" stroke="#A9B0B9" stroke-width="1.5" stroke-dasharray="2 5"/>
+<rect x="1471" y="1094" width="328" height="4" rx="0" fill="#7A8490" stroke="none" stroke-width="1.5"/>
+<text x="1488" y="1125.380615234375" text-anchor="start" font-family="Arial, sans-serif" font-size="22.5" font-weight="700" fill="#172334">Future: Airtel provisioning</text>
+<text x="1488" y="1161.230859375" text-anchor="start" font-family="Arial, sans-serif" font-size="16.8" font-weight="400" fill="#172334">Approved API contract, product</text>
+<text x="1488" y="1182.930859375" text-anchor="start" font-family="Arial, sans-serif" font-size="16.8" font-weight="400" fill="#172334">mapping and service checks needed.</text>
+<rect x="215" y="336" width="350" height="41.425" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="390.0" y="349.138818359375" text-anchor="middle" font-family="Arial, sans-serif" font-size="15.3" font-weight="400" fill="#586678">needs / consent / orders</text>
+<text x="390.0" y="367.49881835937504" text-anchor="middle" font-family="Arial, sans-serif" font-size="15.3" font-weight="400" fill="#586678">plan, findings and status</text>
+<rect x="909" y="336" width="351" height="41.425" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="1084.5" y="349.138818359375" text-anchor="middle" font-family="Arial, sans-serif" font-size="15.3" font-weight="400" fill="#586678">evidence / pilot outcomes</text>
+<text x="1084.5" y="367.49881835937504" text-anchor="middle" font-family="Arial, sans-serif" font-size="15.3" font-weight="400" fill="#586678">order and assistance views</text>
+<rect x="136" y="493" width="110" height="38.95" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="191.0" y="505.33798828125" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.2" font-weight="400" fill="#586678">profile +</text>
+<text x="191.0" y="522.3779882812499" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.2" font-weight="400" fill="#586678">reviewed needs</text>
+<rect x="401" y="501" width="515" height="24.115000000000002" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="658.5" y="514.866845703125" text-anchor="middle" font-family="Arial, sans-serif" font-size="16.3" font-weight="400" fill="#D71920">Failure → re-plan → fresh owner acceptance</text>
+<rect x="343" y="622" width="54" height="21.700000000000003" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="370.0" y="634.1923828125" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="400" fill="#586678">plan</text>
+<rect x="682" y="612" width="56" height="37.375" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="710.0" y="623.828369140625" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="400" fill="#586678">seed</text>
+<text x="710.0" y="640.028369140625" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="400" fill="#586678">tasks</text>
+<rect x="1024" y="622" width="53" height="19.285" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="1050.5" y="632.517919921875" text-anchor="middle" font-family="Arial, sans-serif" font-size="11.7" font-weight="400" fill="#586678">blockers</text>
+<rect x="548" y="788" width="180" height="41.425" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="551" y="801.138818359375" text-anchor="start" font-family="Arial, sans-serif" font-size="15.3" font-weight="400" fill="#586678">orders +</text>
+<text x="551" y="819.498818359375" text-anchor="start" font-family="Arial, sans-serif" font-size="15.3" font-weight="400" fill="#586678">accepted plans</text>
+<rect x="721" y="788" width="148" height="22.75" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="795.0" y="800.92041015625" text-anchor="middle" font-family="Arial, sans-serif" font-size="15.0" font-weight="400" fill="#586678">tasks / events</text>
+<rect x="997" y="779" width="270" height="22.54" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="1132.0" y="791.7748046875" text-anchor="middle" font-family="Arial, sans-serif" font-size="14.8" font-weight="400" fill="#586678">pilot records / costs</text>
+<rect x="343" y="927" width="54" height="20.125" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="370.0" y="938.100341796875" text-anchor="middle" font-family="Arial, sans-serif" font-size="12.5" font-weight="400" fill="#586678">verdict</text>
+<rect x="1024" y="927" width="51" height="21.175" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="1049.5" y="938.828369140625" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.5" font-weight="400" fill="#586678">state</text>
+<rect x="208" y="1056" width="82" height="19.810000000000002" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="211" y="1066.88193359375" text-anchor="start" font-family="Arial, sans-serif" font-size="12.2" font-weight="400" fill="#586678">consent</text>
+<rect x="1365" y="930" width="99" height="36.699999999999996" rx="2" fill="#FFFFFF" stroke="none" stroke-width="1.5"/>
+<text x="1414.5" y="941.6099609375" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.2" font-weight="400" fill="#586678">calls /</text>
+<text x="1414.5" y="957.4499609375" text-anchor="middle" font-family="Arial, sans-serif" font-size="13.2" font-weight="400" fill="#586678">webhooks</text>
+<text transform="translate(18 850) rotate(-90)" x="0" y="9.901171875" font-family="Arial, sans-serif" font-size="13.6" fill="#586678">consented uploads / returned findings</text>
+<text transform="translate(1425 805) rotate(-90)" x="0" y="9.901171875" font-family="Arial, sans-serif" font-size="13.6" fill="#586678">provider requests / validated callbacks</text>
+<text x="60" y="1254.560546875" text-anchor="start" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#172334">Read left to right: review needs → accept a plan → track each service → route help.</text>
+<text x="60" y="1291.21162109375" text-anchor="start" font-family="Arial, sans-serif" font-size="15.4" font-weight="400" fill="#586678">Solid paths show implemented logical data flow within one service. Arrows do not imply separate microservices or live telecom activation.</text>
+<text x="60" y="1327.100341796875" text-anchor="start" font-family="Arial, sans-serif" font-size="12.5" font-weight="400" fill="#586678">NTG | VIT Vellore · Implementation view · Reviewed 7 November 2026</text>
+</svg>
