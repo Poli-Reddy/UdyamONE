@@ -43,7 +43,7 @@ test('customer tracker keeps internal controls, IDs and unavailable payments out
 
 test('staff view exposes explicit simulation controls without enabling an unconfigured checkout',()=>{
  const h=harness();h.run('staffView=true;$("testTools").checked=true;integrationInfo={demo:true,providers:{payments:{status:"not_configured"}}};renderOrder(fixture.order)');
- const markup=h.nodes.get('trackRes').innerHTML;assert.match(markup,/Activation evidence controls/);assert.match(markup,/data-task=/);assert.ok(h.nodes.has('demoVerify'));assert.ok(!h.nodes.has('paymentLink'));
+ const markup=h.nodes.get('trackRes').innerHTML;assert.match(markup,/Activation evidence controls/);assert.match(markup,/do not book an Airtel appointment/);for(const action of ['complete','delay','fail'])assert.match(markup,new RegExp('data-action="'+action+'"'));assert.ok(h.nodes.has('demoVerify'));assert.ok(!h.nodes.has('paymentLink'));
 });
 
 test('quote uses actual API totals, names and correctly wires acceptance',()=>{
@@ -89,8 +89,9 @@ test('invalid saved preferences fall back safely and language/read-aloud persist
  const prefs=h.run('readPreferences()');assert.equal(prefs.language,'te');assert.equal(prefs.readAloud,true);assert.equal(prefs.gender,undefined);
  h.context.localStorage.getItem=()=>JSON.stringify({language:'__proto__',gender:'invalid',speed:100,readAloud:'yes'});
  assert.equal(h.run('readPreferences().language'),'en');assert.equal(h.run('readPreferences().readAloud'),false);
- h.run('S.P={type:"retail",employees:2,sites:1,tier:1};S.needsConfirmed=false;renderAdvisorAnswers()');
- assert.match(h.nodes.get('advisorAnswers').innerHTML,/4 of 6 questions answered/);assert.match(h.nodes.get('advisorAnswers').innerHTML,/Retail \/ kirana/);
+ h.run('S.P={type:"retail",employees:2,sites:1,tier:1};S.needsConfirmed=false;S.showInterpretedAnswers=false;renderAdvisorAnswers()');
+ assert.equal(h.nodes.get('advisorAnswers').innerHTML,'');
+ h.run('S.showInterpretedAnswers=true;renderAdvisorAnswers()');assert.match(h.nodes.get('advisorAnswers').innerHTML,/Business profile captured/);assert.match(h.nodes.get('advisorAnswers').innerHTML,/4 of 6 questions answered/);assert.match(h.nodes.get('advisorAnswers').innerHTML,/Retail \/ kirana/);
 });
 
 function addDeviceSpeech(h,voices=[{lang:'te-IN',name:'Telugu voice'}]){

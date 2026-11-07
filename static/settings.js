@@ -80,7 +80,7 @@ function startListening(){
  stopSpeech();const recognition=new Recognition();activeRecognition=recognition;
  recognition.lang=VL[S.lang]||'en-IN';recognition.continuous=false;recognition.interimResults=false;recognition.maxAlternatives=1;
  recognition.onstart=()=>{$('mic').setAttribute('aria-pressed','true');$('inputStatus').textContent=(VC[S.lang]||VC.en).listening};
-  recognition.onresult=event=>{$('free').value=event.results[0][0].transcript;$('inputStatus').textContent=tr('loading');sendFree()};
+  recognition.onresult=event=>{$('free').value=event.results[0][0].transcript;$('inputStatus').textContent=tr('loading');sendFree('voice')};
  recognition.onerror=event=>{if(event.error!=='aborted')$('inputStatus').textContent=(VC[S.lang]||VC.en).micError};
  recognition.onend=()=>{if(activeRecognition===recognition)activeRecognition=null;$('mic').setAttribute('aria-pressed','false')};
  try{recognition.start()}catch{stopListening();$('inputStatus').textContent='Could not start the microphone. You can type your answer.'}

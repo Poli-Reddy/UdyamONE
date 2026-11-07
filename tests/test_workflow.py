@@ -46,6 +46,10 @@ def test_task_prerequisites_delays_failures_and_independent_progress():
     now = {t['id']: t['forecast'] for t in o['activation']['tasks']}
     assert now['main:P23:check'] > old['main:P23:check']
     assert now['main:P16:check'] == old['main:P16:check']
+    r, _ = event(o, 'main:P01:feasibility', 'retry')
+    assert r.status_code == 200
+    o = r.json()
+    assert next(t for t in o['activation']['tasks'] if t['id'] == 'main:P01:feasibility')['status'] == 'pending'
     r, _ = event(o, 'main:P01:feasibility', 'fail')
     o = r.json()
     assert o['activation']['forecast'] is None and o['activation']['alternatives']

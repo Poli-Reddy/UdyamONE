@@ -148,6 +148,7 @@ footer{max-width:980px;margin:20px auto 40px;padding:0 14px;color:var(--m);font-
 
 <!-- KYC -->
 <div id="kyc" class="tab">
+  <p class="staff-only"><button class="sec" id="backFromKyc">← <span data-i18n="back_queue">Back to work queue</span></button></p>
   <div class="card">
     <h2 data-i18n="kyc_title">Verify your business</h2>
     <p class="muted" data-i18n="kyc_sub">Upload clear documents matching the business, contact and installation address on your order.</p>
@@ -348,7 +349,7 @@ const T={
 const NEED_KEYS=['cctv','pos','email','whatsapp','security','backup','wifi','sms','telephony','failover','website','static_ip','tollfree','sdwan','firewall','machine','fleet','leased_line','fibre'];
 const FIELDS=['type','employees','sites','tier','gstin'];
 const OPVAL=[[ 'retail','clinic','office','restaurant','manufacturer','coaching'],[4,12,40],[1,2,4,8],[1,2],[true,false]];
-const S={lang:'en',P:{},step:0,needs:[],needsConfirmed:false,off:[],rec:null,order:null,partner:'',partnerExp:null,partnerSig:'',voiceGender:'female'};
+const S={lang:'en',P:{},step:0,needs:[],needsConfirmed:false,showInterpretedAnswers:false,off:[],rec:null,order:null,partner:'',partnerExp:null,partnerSig:'',voiceGender:'female'};
 const VC={
   en:{fallback:'Online voice unavailable; using the best device voice.',failed:'No voice is available on this device.',listening:'Listening…',mic:'Voice input',micError:'Voice input could not start'},
   hi:{fallback:'ऑनलाइन आवाज़ उपलब्ध नहीं है; डिवाइस की आवाज़ इस्तेमाल हो रही है।',failed:'इस डिवाइस पर आवाज़ उपलब्ध नहीं है।',listening:'सुन रहा है…',mic:'आवाज़ से लिखें',micError:'माइक्रोफोन शुरू नहीं हो सका'},
@@ -375,7 +376,7 @@ function advisorAnswerLabel(field,value){
 }
 function renderAdvisorAnswers(){
   const box=$('advisorAnswers');if(!box)return;const answered=FIELDS.filter(field=>S.P[field]!==undefined),count=answered.length+(S.needsConfirmed?1:0);
-  box.hidden=count===0;if(!count){box.innerHTML='';return}
+  box.hidden=!S.showInterpretedAnswers||count===0;if(!S.showInterpretedAnswers||!count){box.innerHTML='';return}
   const rows=answered.map(field=>'<div><span>'+esc(T_().q[FIELDS.indexOf(field)])+'</span><strong>'+esc(advisorAnswerLabel(field,S.P[field]))+'</strong></div>');
   if(S.needsConfirmed)rows.push('<div><span>'+esc(T_().q[5])+'</span><strong>'+esc(S.needs.map(key=>T_().needs[key]||key).join(', '))+'</strong></div>');
   box.innerHTML='<div class="advisor-answers-head"><strong>'+esc(tr('answer_review'))+'</strong><span>'+esc(tr('answers_progress',{count}))+'</span></div><div class="advisor-answer-list">'+rows.join('')+'</div>';
@@ -396,8 +397,9 @@ function ask(){
     const b=document.createElement('button');b.className='pri';b.textContent=t.done;b.onclick=()=>{S.needsConfirmed=true;renderAdvisorAnswers();c.innerHTML='';run()};c.appendChild(b);
   }
 }
-function resetAdvisor(){S.P={};S.step=0;S.needs=[];S.needsConfirmed=false;S.off=[];S.rec=null;$('chat').innerHTML='';$('res').innerHTML='';$('quoteCard').innerHTML='<p class="muted">'+esc(T_().quote_empty)+'</p>';$('spendWrap').classList.add('hide');renderAdvisorAnswers();ask()}
-async function sendFree(){
+function resetAdvisor(){S.P={};S.step=0;S.needs=[];S.needsConfirmed=false;S.showInterpretedAnswers=false;S.off=[];S.rec=null;$('chat').innerHTML='';$('res').innerHTML='';$('quoteCard').innerHTML='<p class="muted">'+esc(T_().quote_empty)+'</p>';$('spendWrap').classList.add('hide');renderAdvisorAnswers();ask()}
+async function sendFree(source='text'){
+  S.showInterpretedAnswers=source==='voice';
   const text=$('free').value.trim();if(!text)return;$('chat').innerHTML='';say(text,true);$('free').value='';
   try{
     const r=await fetch('/api/intent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,lang:S.lang})});
@@ -499,9 +501,9 @@ function init(){
   S.partner=(u.get('partner')||saved.code||localStorage.getItem('udyam_partner')||'').toUpperCase();S.partnerExp=Number(u.get('partner_exp')||saved.expires||0)||null;S.partnerSig=u.get('partner_sig')||saved.signature||'';
   if(S.partner){localStorage.setItem('udyam_partner',S.partner);if(S.partnerExp&&S.partnerSig)localStorage.setItem('udyam_partner_referral',JSON.stringify({code:S.partner,expires:S.partnerExp,signature:S.partnerSig}))}
   applyLang();
-  const last=localStorage.getItem('udyam_order');if(last){S.order={id:last};$('trackId').value=last;$('kycOrder').value=last;loadOrder(last)}
-  $('restart').onclick=resetAdvisor;$('send').onclick=sendFree;
-  $('free').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();sendFree()}};
+  const last=localStorage.getItem('udyam_order'),canRestore=last&&(sessionStorage.getItem('udyam_customer_token')||sessionStorage.getItem('uo_token_'+last));if(canRestore){S.order={id:last};$('trackId').value=last;$('kycOrder').value=last;loadOrder(last)}
+  $('restart').onclick=resetAdvisor;$('send').onclick=()=>sendFree('text');
+  $('free').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();sendFree('text')}};
   $('createOrder').onclick=createOrder;$('kbtn').onclick=submitKyc;$('loadOrder').onclick=()=>loadOrder($('trackId').value.trim());$('refreshOrder').onclick=()=>S.order&&loadOrder(S.order.id);
   $('loadBo').onclick=loadBo;$('refreshBo').onclick=loadBo;$('partnerBtn').onclick=loadPartner;
   $('lane').onchange=()=>{const free=$('lane').value==='gst_free';$('gstWrap').classList.toggle('hide',free);if(free)$('f_gst').value='';$('consentText').textContent=tr(free?'kyc_consent_free':'kyc_consent_standard')};
