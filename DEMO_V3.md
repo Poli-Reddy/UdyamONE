@@ -66,6 +66,19 @@ Successful document set:
 - `kyc_samples/K03_signatory_id.png`
 - `kyc_samples/K03_address_proof.png`
 
+## Fast recording account
+
+In explicitly enabled local demo mode, sign in with **`8074982840`** and the changing local OTP. Each successful login resets and loads a synthetic Ganesh Woodcraft recording journey automatically:
+
+- Manufacturer, two employees and two locations;
+- CCTV and WhatsApp selected as the two business needs;
+- accepted plan and itemised quote already available;
+- business verification already recorded;
+- one business-wide service complete and the remaining service-location work visible;
+- all four customer steps unlocked without typing or uploading.
+
+The plan correctly expands two selected needs into three catalogue products and five service-location instances: AirFiber is a required CCTV dependency at each location, CCTV is installed at each location, and WhatsApp is shared business-wide. This fixed account and reset behavior are disabled outside demo mode.
+
 ---
 
 # Preload every scene before recording
