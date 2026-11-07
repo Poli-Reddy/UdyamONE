@@ -12,6 +12,7 @@ const html=fs.readFileSync(path.join(root,'static/index.html'),'utf8');
 const inline=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>m[1]).join('\n');
 const source=fs.readFileSync(path.join(root,'static/decision.js'),'utf8').replace(/^init\(\);\s*enhance\(\);\s*finishExperience\(\);/m,'');
 const settings=fs.readFileSync(path.join(root,'static/settings.js'),'utf8');
+const locales=fs.readFileSync(path.join(root,'static/locales.js'),'utf8');
 
 function harness(){
  const nodes=new Map(),requests=[];
@@ -28,7 +29,7 @@ function harness(){
  for(const id of ['orderAccess','kycContext','orderRestore'])nodes.set(id,new Element(id));
  const storage={getItem(){return null},setItem(){},removeItem(){}};
  const context=vm.createContext({document:{body:{classList:{toggle(){}}},getElementById:id=>nodes.get(id)||null,querySelectorAll:()=>[]},window:{addEventListener(){},scrollTo(){}},sessionStorage:storage,localStorage:storage,crypto:{randomUUID:()=> '12345678-event-key'},setTimeout,clearTimeout,AbortController,URLSearchParams,location:{search:''},fixture:structuredClone(fixture),fetch:async(url,request)=>{requests.push({url,request});return {ok:true,status:200,json:async()=>structuredClone(fixture.order)}}});
- vm.runInContext(inline+'\n'+settings+'\n'+source,context);
+ vm.runInContext(inline+'\n'+locales+'\n'+settings+'\n'+source,context);
  return {nodes,context,requests,run:code=>vm.runInContext(code,context)};
 }
 
@@ -87,6 +88,8 @@ test('invalid saved preferences fall back safely and language/read-aloud persist
  const prefs=h.run('readPreferences()');assert.equal(prefs.language,'te');assert.equal(prefs.readAloud,true);assert.equal(prefs.gender,undefined);
  h.context.localStorage.getItem=()=>JSON.stringify({language:'__proto__',gender:'invalid',speed:100,readAloud:'yes'});
  assert.equal(h.run('readPreferences().language'),'en');assert.equal(h.run('readPreferences().readAloud'),false);
+ h.run('S.P={type:"retail",employees:2,sites:1,tier:1};S.needsConfirmed=false;renderAdvisorAnswers()');
+ assert.match(h.nodes.get('advisorAnswers').innerHTML,/4 of 6 questions answered/);assert.match(h.nodes.get('advisorAnswers').innerHTML,/Retail \/ kirana/);
 });
 
 function addDeviceSpeech(h,voices=[{lang:'te-IN',name:'Telugu voice'}]){

@@ -3,13 +3,17 @@ input:not([type]),input[type=password],input[type=date]{width:100%;border:1px so
 [hidden],body:not(.staff-view) .staff-only,body:not(.test-tools) .test-only,.legacy-spend{display:none!important}
 body.staff-view .customer-only,body.staff-view nav button:not(.staff-only){display:none!important}
 body.staff-view nav .staff-only{display:flex!important;flex:1}
-body.staff-view #openAccess{display:none}
+body.staff-view #journeyNav{display:none!important}
 .mode-toggle{border:1px solid rgba(255,255,255,.6);background:transparent;color:#fff;border-radius:8px;padding:7px 10px;cursor:pointer;min-height:36px;font-weight:600}
 .demo-notice{font-size:12px;color:#626a78;background:#eef0f4;border-radius:8px;padding:10px 12px;margin-bottom:12px}
 nav{top:var(--header-height,60px)}
 header{flex-wrap:wrap}
 input,select,textarea{min-width:0;max-width:100%}
 button:focus-visible,summary:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #4279d6;outline-offset:3px}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+.mic-button{display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;width:44px;padding:8px!important}.mic-button svg{pointer-events:none}
+.edit-action{display:inline-flex;align-items:center;gap:7px}.edit-action svg{flex:0 0 auto}
+.advisor-answers{margin:14px 0;border:1px solid #dce4ee;border-radius:12px;background:#f8fafc;overflow:hidden}.advisor-answers-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;background:#eef3f8;font-size:12px}.advisor-answers-head span{color:var(--m)}.advisor-answer-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px;padding:5px 14px}.advisor-answer-list>div{padding:10px 0;border-bottom:1px solid #e5eaf0}.advisor-answer-list span,.advisor-answer-list strong{display:block}.advisor-answer-list span{font-size:11px;color:var(--m);line-height:1.4}.advisor-answer-list strong{font-size:13px;margin-top:3px}
 .need-option{display:flex;gap:8px;align-items:center;min-width:0;padding:6px;background:#f7f8fa;border-radius:6px}
 .need-editor .need-option label{flex:1;min-width:0;line-height:1.5}
 .need-option>input[type=number]{width:64px;flex:0 0 64px;margin-left:0;padding:6px;min-height:36px}
@@ -118,6 +122,7 @@ body:has(dialog[open]){overflow:hidden}
 @media(max-width:720px){header{padding:12px 16px;position:sticky}header .brand{font-size:22px}header .tools{flex:0 1 auto}.settings-trigger{padding:8px 11px}nav{padding:0 6px;gap:0}nav button{min-width:80px;min-height:60px;font-size:11px;gap:4px;flex-direction:column;padding:8px 5px}nav button::before{width:19px;height:19px;font-size:10px}main{padding:18px 14px}.welcome-zone{grid-template-columns:1fr;gap:25px;padding:6px 4px 24px}.welcome-zone h1{font-size:35px}.journey-preview{gap:13px}.journey-preview strong{font-size:13px}.journey-preview small{font-size:11px}.card{padding:18px;border-radius:14px}.card h2{font-size:18px}.workspace-bar{padding:12px;align-items:flex-start;flex-wrap:wrap}.settings-heading{padding:20px}.settings-section{padding:20px}.settings-section .grid2{grid-template-columns:1fr 1fr}dialog{max-height:calc(100dvh - 24px);width:calc(100vw - 24px);border-radius:16px}.task-summary strong{font-size:20px}}
 @media(max-width:720px){.landing-page{padding-top:0}.landing-hero{grid-template-columns:1fr;gap:26px;min-height:0}.landing-hero h1{font-size:43px}.landing-lead{font-size:16px}.landing-steps{grid-template-columns:1fr 1fr}.landing-section{padding:45px 0}.landing-proof{align-items:flex-start;flex-direction:column;padding:26px}.dashboard-grid{grid-template-columns:1fr}.dashboard-grid .next-action-card{grid-row:auto}.login-trigger{padding:8px 11px}.settings-trigger span{display:none}.access-role-tabs{padding:14px 18px 0}}
 @media(max-width:720px){.queue-item{grid-template-columns:1fr}.queue-item .row{justify-content:flex-start}.journey-hint{display:block}.journey-hint span{display:block;margin-top:4px}}
+@media(max-width:720px){.advisor-answer-list{grid-template-columns:1fr}.advisor-answers-head{align-items:flex-start;flex-direction:column;gap:2px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
 .landing-decision article>span{color:#b80023}
 .badge{color:#a60020}

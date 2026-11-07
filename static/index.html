@@ -70,40 +70,37 @@ footer{max-width:980px;margin:20px auto 40px;padding:0 14px;color:var(--m);font-
 .toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:var(--i);color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;z-index:50;opacity:0;transition:opacity .2s;pointer-events:none}
 .toast.show{opacity:1}
 </style>
-<link rel="stylesheet" href="/static/decision.css?v=6">
+<link rel="stylesheet" href="/static/decision.css?v=7">
 </head>
 <body>
 <header>
-  <a class="brand" href="#" id="homeLink">Udyam<span>One</span><small>Built around your business</small></a>
+  <a class="brand" href="#" id="homeLink">Udyam<span>One</span><small data-i18n="brand_tagline">Built around your business</small></a>
   <div class="tools">
     <span class="badge" id="partnerBadge"></span>
-    <button id="openAccess" class="login-trigger">Sign in</button>
-    <button id="openSettings" class="settings-trigger" aria-haspopup="dialog" aria-controls="settingsDialog"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="currentColor"/><circle cx="15" cy="17" r="3" fill="currentColor"/></svg><span>Settings</span></button>
+    <button id="openAccess" class="login-trigger" data-i18n="sign_in">Sign in</button>
+    <button id="openSettings" class="settings-trigger" aria-haspopup="dialog" aria-controls="settingsDialog"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 7h16M4 17h16"/><circle cx="9" cy="7" r="3" fill="currentColor"/><circle cx="15" cy="17" r="3" fill="currentColor"/></svg><span data-i18n="settings">Settings</span></button>
   </div>
 </header>
 <nav id="journeyNav" aria-label="Your service journey" hidden>
-  <button class="customer-session-only" data-t="custDash" data-step="⌂">Dashboard</button>
+  <button class="customer-session-only" data-t="custDash" data-step="⌂" data-i18n="nav_dashboard">Dashboard</button>
   <button class="on" data-t="adv" data-step="1" aria-current="page" data-i18n="nav_adv">Your needs</button>
   <button data-t="quote" data-step="2" data-i18n="nav_quote">Your plan</button>
   <button data-t="kyc" data-step="3" data-i18n="nav_kyc">Verification</button>
   <button data-t="trk" data-step="4" data-i18n="nav_track">Track services</button>
-  <button class="staff-only" data-t="bo" data-step="·" data-i18n="nav_bo">Operations</button>
 </nav>
 <main>
 <section id="landingPage" class="landing-page" aria-labelledby="landingTitle">
-  <div class="landing-hero"><div><p class="eyebrow">BUSINESS SERVICES, WITHOUT THE GUESSWORK</p><h1 id="landingTitle">Keep what works.<br><span>Add only what is missing.</span></h1><p class="landing-lead">UdyamOne helps small businesses choose, verify and follow the right connectivity and digital services in one clear journey.</p><div class="landing-actions"><button class="pri" id="startPlanning">Plan my services</button><button class="sec" id="landingSignIn">Sign in to my account</button></div><p class="small-text">You can explore a plan before signing in. Nothing is ordered until you review and accept it.</p></div><div class="landing-decision"><p class="eyebrow">WHAT MAKES IT DIFFERENT</p><article><span>01</span><div><strong>It starts with what you already have</strong><p>Useful existing services stay in the plan, so you do not buy them twice.</p></div></article><article><span>02</span><div><strong>It can recommend nothing new</strong><p>If your reviewed needs are already covered, there is no forced bundle.</p></div></article><article><span>03</span><div><strong>It recovers without starting over</strong><p>If one service fails, completed independent work stays complete and you approve any revised price.</p></div></article></div></div>
-  <section class="landing-section" aria-labelledby="howTitle"><p class="eyebrow">ONE SIMPLE JOURNEY</p><h2 id="howTitle">From needs to service progress</h2><div class="landing-steps"><article><b>1</b><h3>Tell us what you need</h3><p>Your business, locations, existing services and budget.</p></article><article><b>2</b><h3>Review one clear plan</h3><p>See what to keep, add or replace later, with charges separated.</p></article><article><b>3</b><h3>Verify your business</h3><p>Upload only the documents required for your accepted order.</p></article><article><b>4</b><h3>Follow every service</h3><p>See the next step, blockers and estimated dates in one place.</p></article></div></section>
-  <section class="landing-proof"><div><p class="eyebrow">DESIGNED FOR INDIAN MSMEs</p><h2>For shops, clinics, offices, multi-site businesses and small manufacturers</h2><p>The planner uses business size, location, registration status and actual needs. Prices and eligibility in this prototype come from the synthetic Airtel SYNC case catalogue and are not live Airtel offers.</p></div><button class="pri" id="startPlanningBottom">Build a service plan</button></section>
+  <div class="landing-hero"><div><p class="eyebrow" data-i18n="landing_eyebrow">BUSINESS SERVICES, WITHOUT THE GUESSWORK</p><h1 id="landingTitle"><span data-i18n="landing_title_1">Keep what works.</span><br><span data-i18n="landing_title_2">Add only what is missing.</span></h1><p class="landing-lead" data-i18n="landing_lead">UdyamOne helps small businesses choose, verify and follow the right connectivity and digital services in one clear journey.</p><div class="landing-actions"><button class="pri" id="startPlanning" data-i18n="plan_services">Plan my services</button><button class="sec" id="landingSignIn" data-i18n="sign_in_account">Sign in to my account</button></div><p class="small-text" data-i18n="explore_notice">You can explore a plan before signing in. Nothing is ordered until you review and accept it.</p></div><div class="landing-decision"><p class="eyebrow" data-i18n="different_eyebrow">WHAT MAKES IT DIFFERENT</p><article><span>01</span><div><strong data-i18n="different_1_title">It starts with what you already have</strong><p data-i18n="different_1_text">Useful existing services stay in the plan, so you do not buy them twice.</p></div></article><article><span>02</span><div><strong data-i18n="different_2_title">It can recommend nothing new</strong><p data-i18n="different_2_text">If your reviewed needs are already covered, there is no forced bundle.</p></div></article><article><span>03</span><div><strong data-i18n="different_3_title">It recovers without starting over</strong><p data-i18n="different_3_text">If one service fails, completed independent work stays complete and you approve any revised price.</p></div></article></div></div>
+  <section class="landing-section" aria-labelledby="howTitle"><p class="eyebrow" data-i18n="journey_eyebrow">ONE SIMPLE JOURNEY</p><h2 id="howTitle" data-i18n="journey_title">From needs to service progress</h2><div class="landing-steps"><article><b>1</b><h3 data-i18n="journey_1_title">Tell us what you need</h3><p data-i18n="journey_1_text">Your business, locations, existing services and budget.</p></article><article><b>2</b><h3 data-i18n="journey_2_title">Review one clear plan</h3><p data-i18n="journey_2_text">See what to keep, add or replace later, with charges separated.</p></article><article><b>3</b><h3 data-i18n="journey_3_title">Verify your business</h3><p data-i18n="journey_3_text">Upload only the documents required for your accepted order.</p></article><article><b>4</b><h3 data-i18n="journey_4_title">Follow every service</h3><p data-i18n="journey_4_text">See the next step, blockers and estimated dates in one place.</p></article></div></section>
+  <section class="landing-proof"><div><p class="eyebrow" data-i18n="msme_eyebrow">DESIGNED FOR INDIAN MSMEs</p><h2 data-i18n="msme_title">For shops, clinics, offices, multi-site businesses and small manufacturers</h2><p data-i18n="msme_text">The planner uses business size, location, registration status and actual needs. Prices and eligibility in this prototype come from the synthetic Airtel SYNC case catalogue and are not live Airtel offers.</p></div><button class="pri" id="startPlanningBottom" data-i18n="build_plan">Build a service plan</button></section>
 </section>
 <div id="appShell" hidden>
-<div id="workspaceBar" class="workspace-bar" hidden><div><strong>Staff workspace</strong><span id="workspaceRole">Manage only the work allowed for your role</span></div><div class="row"><button id="backToStaff" class="sec">Work queue</button><button id="returnCustomer" class="ghost">Exit workspace</button></div></div>
-<div id="journeyHint" class="journey-hint customer-only" role="status"><strong>Step 1 of 4 · Tell us what you need</strong><span>Answer a few short questions. You can review everything before ordering.</span></div>
-<section id="welcomeZone" class="welcome-zone" aria-labelledby="welcomeTitle"><div><p class="eyebrow">YOUR BUSINESS. YOUR WAY.</p><h1 id="welcomeTitle">The right services.<br><span>Only what you need.</span></h1><p>Keep what works, fill the gaps and follow every step in one place.</p></div><ol class="journey-preview"><li><span>01</span><div><strong>Tell us what you need</strong><small>Your team, locations and existing services.</small></div></li><li><span>02</span><div><strong>Choose with confidence</strong><small>A clear plan with costs and reasons.</small></div></li><li><span>03</span><div><strong>Stay in the loop</strong><small>See progress and what happens next.</small></div></li></ol></section>
+<section id="welcomeZone" class="welcome-zone" aria-labelledby="welcomeTitle"><div><p class="eyebrow" data-i18n="welcome_eyebrow">YOUR BUSINESS. YOUR WAY.</p><h1 id="welcomeTitle"><span data-i18n="welcome_title_1">The right services.</span><br><span data-i18n="welcome_title_2">Only what you need.</span></h1><p data-i18n="welcome_text">Keep what works, fill the gaps and follow every step in one place.</p></div><ol class="journey-preview"><li><span>01</span><div><strong data-i18n="journey_1_title">Tell us what you need</strong><small data-i18n="welcome_step_1">Your team, locations and existing services.</small></div></li><li><span>02</span><div><strong data-i18n="welcome_step_2_title">Choose with confidence</strong><small data-i18n="welcome_step_2">A clear plan with costs and reasons.</small></div></li><li><span>03</span><div><strong data-i18n="welcome_step_3_title">Stay in the loop</strong><small data-i18n="welcome_step_3">See progress and what happens next.</small></div></li></ol></section>
 
 <!-- CUSTOMER DASHBOARD -->
 <div id="custDash" class="tab customer-only">
-  <section class="dashboard-hero"><div><p class="eyebrow">YOUR BUSINESS DASHBOARD</p><h2 id="customerGreeting">Welcome back</h2><p id="customerDashboardSummary">See the one thing that needs your attention now.</p></div><button class="ghost" id="customerSignOutTop">Sign out</button></section>
-  <div class="dashboard-grid"><section class="card next-action-card"><p class="eyebrow">NEXT ACTION</p><h3 id="customerNextTitle">Start your service plan</h3><p id="customerNextText">Tell us about your business and review recommendations before ordering.</p><button class="pri" id="customerNextAction">Plan my services</button></section><section class="card"><h3>Your current order</h3><div id="customerOrderSummary"><p class="muted">No order is loaded in this browser.</p></div></section><section class="card"><h3>Quick actions</h3><div class="quick-actions"><button class="sec" id="dashboardPlan">Create a new plan</button><button class="sec" id="dashboardVerify">Business verification</button><button class="sec" id="dashboardTrack">Track services</button></div></section></div>
+  <section class="dashboard-hero"><div><p class="eyebrow" data-i18n="dashboard_eyebrow">YOUR BUSINESS DASHBOARD</p><h2 id="customerGreeting" data-i18n="welcome_back">Welcome back</h2><p id="customerDashboardSummary" data-i18n="dashboard_summary">See the one thing that needs your attention now.</p></div></section>
+  <div class="dashboard-grid"><section class="card next-action-card"><p class="eyebrow" data-i18n="next_action">NEXT ACTION</p><h3 id="customerNextTitle" data-i18n="start_plan">Start your service plan</h3><p id="customerNextText" data-i18n="start_plan_text">Tell us about your business and review recommendations before ordering.</p><button class="pri" id="customerNextAction" data-i18n="plan_services">Plan my services</button></section><section class="card"><h3 data-i18n="current_order">Your current order</h3><div id="customerOrderSummary"><p class="muted" data-i18n="no_order_loaded">No order is loaded in this browser.</p></div></section><section class="card"><h3 data-i18n="quick_actions">Quick actions</h3><div class="quick-actions"><button class="sec" id="dashboardPlan" data-i18n="create_new_plan">Create a new plan</button><button class="sec" id="dashboardVerify" data-i18n="business_verification">Business verification</button><button class="sec" id="dashboardTrack" data-i18n="track_services">Track services</button></div></section></div>
 </div>
 
 <!-- ADVISOR -->
@@ -111,6 +108,7 @@ footer{max-width:980px;margin:20px auto 40px;padding:0 14px;color:var(--m);font-
   <div class="card" id="advisorCard">
     <div class="row"><h2 data-i18n="adv_title">Tell us about your business</h2><span class="grow"></span><button class="ghost" id="restart" data-i18n="restart">Start over</button></div>
     <p class="muted" data-i18n="adv_sub">Tell us what your business needs. Review services and prices before ordering.</p>
+    <div id="advisorAnswers" class="advisor-answers" hidden aria-live="polite"></div>
     <div id="advisorSummary" class="advisor-summary" hidden></div>
     <div id="chat"></div>
     <div id="chips" class="chips"></div>
@@ -121,9 +119,9 @@ footer{max-width:980px;margin:20px auto 40px;padding:0 14px;color:var(--m);font-
     <div class="row" id="advisorFreeInput" style="margin-top:8px">
       <input id="free" class="grow" type="text" data-i18n-ph="free_ph" placeholder="Or describe your business in one line…">
       <button class="pri" id="send" data-i18n="send">Send</button>
-      <button class="sec" id="mic" title="Voice input">🎙</button>
+      <button class="sec mic-button" id="mic" title="Voice input"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5M8 22h8"/></svg><span class="sr-only" data-i18n="voice_input">Voice input</span></button>
     </div>
-    <p id="inputStatus" class="small-text input-status" role="status" aria-live="polite">You can type, use the choices above or speak your answer.</p>
+    <p id="inputStatus" class="small-text input-status" role="status" aria-live="polite" data-i18n="input_help">You can type, use the choices above or speak your answer.</p>
   </div>
   <div id="res"></div>
 </div>
@@ -164,7 +162,7 @@ footer{max-width:980px;margin:20px auto 40px;padding:0 14px;color:var(--m);font-
     </div>
     <div class="card" style="background:#fbfbfc;margin:10px 0">
       <b data-i18n="consent_title">Consent notice</b>
-      <p class="muted" id="consentText" style="margin:6px 0">UdyamOne will read these documents only to verify your business for this order. Images are deleted after reading; extracted fields and the consent record are kept for the order. Upload only documents you are authorized to share.</p>
+      <p class="muted" id="consentText" style="margin:6px 0" data-i18n="kyc_consent_standard">UdyamOne will read these documents only to verify your business for this order. Images are deleted after reading; extracted fields and the consent record are kept for the order. Upload only documents you are authorized to share.</p>
       <label style="display:flex;gap:8px;font-size:13px"><input type="checkbox" id="cons"> <span data-i18n="consent_ok">I agree for this purpose</span></label>
     </div>
     <div class="grid2">
@@ -186,21 +184,21 @@ footer{max-width:980px;margin:20px auto 40px;padding:0 14px;color:var(--m);font-
 <div id="trk" class="tab">
   <div class="card">
     <div class="row"><h2 data-i18n="track_title">Your order</h2><span class="grow"></span><button class="ghost" id="refreshOrder" data-i18n="refresh">Refresh</button></div>
-    <div class="row"><input id="trackId" class="grow" type="text" placeholder="UO-…"><button class="pri" id="loadOrder" data-i18n="load">Load</button></div>
+    <div class="row order-lookup customer-only"><input id="trackId" class="grow" type="text" placeholder="UO-…"><button class="pri" id="loadOrder" data-i18n="load">Load</button></div>
     <div id="trackRes"><p class="muted" data-i18n="track_empty">Create an order to see its progress and estimated dates.</p></div>
   </div>
 </div>
 
 <!-- STAFF WORKSPACE -->
 <div id="bo" class="tab staff-only">
-  <div class="staff-intro"><p class="eyebrow">ROLE-BASED WORKSPACE</p><h2>What needs attention</h2><p class="muted">Choose a workspace. Only actions allowed for your signed-in role are shown.</p></div>
+  <div class="staff-intro"><p class="eyebrow" data-i18n="role_workspace">ROLE-BASED WORKSPACE</p><h2 data-i18n="needs_attention">What needs attention</h2><p class="muted" data-i18n="role_workspace_text">Choose a workspace. Only actions allowed for your signed-in role are shown.</p></div>
   <div class="staff-workspace-nav" role="tablist" aria-label="Staff work areas">
-    <button class="on" data-staff-panel="staffQueuePanel">Work queue</button>
-    <button data-staff-panel="staffLeadsPanel">Lead assistance</button>
-    <button data-staff-panel="staffPartnersPanel">Partners</button>
-    <button data-staff-panel="staffSystemPanel">System</button>
+    <button class="on" data-staff-panel="staffQueuePanel" data-i18n="work_queue">Work queue</button>
+    <button data-staff-panel="staffLeadsPanel" data-i18n="lead_assistance">Lead assistance</button>
+    <button data-staff-panel="staffPartnersPanel" data-i18n="partners">Partners</button>
+    <button data-staff-panel="staffSystemPanel" data-i18n="system">System</button>
   </div>
-  <section id="staffQueuePanel" class="staff-panel on"><div class="card"><div class="row"><div><h3>Order work queue</h3><p class="muted">Orders are prioritized by the next operational action, not by internal task IDs.</p></div><span class="grow"></span><button class="ghost" id="refreshQueue">Refresh</button></div><div id="staffQueue" role="status"></div></div></section>
+  <section id="staffQueuePanel" class="staff-panel on"><div class="card"><div class="row"><div><h3 data-i18n="order_queue">Order work queue</h3><p class="muted" data-i18n="order_queue_text">Orders are prioritized by the next operational action, not by internal task IDs.</p></div><span class="grow"></span><button class="ghost" id="refreshQueue" data-i18n="refresh">Refresh</button></div><div id="staffQueue" role="status"></div></div></section>
   <section id="staffLeadsPanel" class="staff-panel"><div class="card">
     <div class="row"><h2 data-i18n="bo_title">Back-office: leads the advisor could not close</h2><span class="grow"></span><button class="ghost" id="refreshBo" data-i18n="refresh">Refresh</button></div>
     <p class="muted" data-i18n="bo_sub">Ranked by a Random Forest propensity score trained on the 5,000-lead pack, weighted by the segment's median bundle.</p>
@@ -222,27 +220,27 @@ footer{max-width:980px;margin:20px auto 40px;padding:0 14px;color:var(--m);font-
 </div>
 </main>
 <footer>
-  <span data-i18n="footer">UdyamOne · Business services, made simple.</span><button class="ghost" id="footerSettings">Settings &amp; privacy</button>
+  <span data-i18n="footer">UdyamOne · Business services, made simple.</span><button class="ghost" id="footerSettings" data-i18n="settings_privacy">Settings &amp; privacy</button>
 </footer>
 <dialog id="accessDialog" aria-labelledby="accessTitle">
-  <div class="settings-heading"><div><p class="eyebrow">SECURE ACCESS</p><h2 id="accessTitle">Sign in</h2></div><button class="close-settings" id="closeAccess" aria-label="Close sign in">×</button></div>
-  <div class="access-role-tabs" role="tablist"><button class="on" data-access-panel="customerAccessPanel">Business customer</button><button data-access-panel="staffAccessPanel">Employee or partner</button></div>
-  <section id="customerAccessPanel" class="access-panel on settings-section"><h3>Access your business orders</h3><p class="small-text">Use the phone number connected to your order. We will send a six-digit sign-in code.</p><div id="customerLoginForm"><label class="fld" for="customerPhone">Phone number</label><input id="customerPhone" type="tel" autocomplete="tel"><button class="pri" id="sendCustomerCode">Send sign-in code</button><div id="customerCodeForm" hidden><label class="fld" for="customerCode">6-digit code</label><input id="customerCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6"><button class="pri" id="verifyCustomerCode">Verify and continue</button></div><p id="customerAuthMessage" role="status"></p></div><div id="customerSession" hidden><p class="note info">Customer sign-in is active in this tab.</p><button class="pri" id="openCustomerDashboard">Open my dashboard</button> <button class="sec" id="customerLogout">Sign out</button></div></section>
-  <section id="staffAccessPanel" class="access-panel settings-section"><h3>Employee or partner workspace</h3><p class="small-text">Your organisation identity controls which queues, customer records and actions you can use.</p><div id="staffAccessForm"><label class="fld" for="adminToken">OIDC access token</label><input id="adminToken" type="password" autocomplete="off" placeholder="Paste your authorised access token"><p class="small-text">A shared local key is accepted only in an explicitly enabled demo environment.</p><button class="pri" id="enterStaff">Open my workspace</button><p id="staffMessage" role="status"></p></div><div id="staffSession" hidden><p class="note info">Staff access is active in this tab.</p><button class="sec" id="leaveStaff">Exit staff workspace</button></div></section>
+  <div class="settings-heading"><div><p class="eyebrow" data-i18n="secure_access">SECURE ACCESS</p><h2 id="accessTitle" data-i18n="sign_in">Sign in</h2></div><button class="close-settings" id="closeAccess" aria-label="Close sign in">×</button></div>
+  <div id="accessRoleTabs" class="access-role-tabs" role="tablist"><button class="on" data-access-panel="customerAccessPanel" data-i18n="business_customer">Business customer</button><button data-access-panel="staffAccessPanel" data-i18n="employee_partner">Employee or partner</button></div>
+  <section id="customerAccessPanel" class="access-panel on settings-section"><h3 data-i18n="access_orders">Access your business orders</h3><p class="small-text" data-i18n="otp_explain">Use the phone number connected to your order. We will send a six-digit sign-in code.</p><div id="customerLoginForm"><label class="fld" for="customerPhone" data-i18n="phone_number">Phone number</label><input id="customerPhone" type="tel" autocomplete="tel"><button class="pri" id="sendCustomerCode" data-i18n="send_code">Send sign-in code</button><div id="customerCodeForm" hidden><label class="fld" for="customerCode" data-i18n="six_digit_code">6-digit code</label><input id="customerCode" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6"><button class="pri" id="verifyCustomerCode" data-i18n="verify_continue">Verify and continue</button></div><p id="customerAuthMessage" role="status"></p></div><div id="customerSession" hidden><p class="note info" data-i18n="customer_session_active">Customer sign-in is active in this tab.</p><p id="customerAccountSummary" class="small-text"></p><button class="pri" id="openCustomerDashboard" data-i18n="open_dashboard">Open my dashboard</button> <button class="sec" id="customerLogout" data-i18n="sign_out">Sign out</button></div></section>
+  <section id="staffAccessPanel" class="access-panel settings-section"><h3 data-i18n="employee_workspace">Employee or partner workspace</h3><p class="small-text" data-i18n="employee_workspace_text">Your organisation identity controls which queues, customer records and actions you can use.</p><div id="staffAccessForm"><label class="fld" for="adminToken" data-i18n="oidc_token">OIDC access token</label><input id="adminToken" type="password" autocomplete="off" placeholder="Paste your authorised access token" data-i18n-ph="authorised_token"><p class="small-text" data-i18n="local_key_notice">A shared local key is accepted only in an explicitly enabled demo environment.</p><button class="pri" id="enterStaff" data-i18n="open_workspace">Open my workspace</button><p id="staffMessage" role="status"></p></div><div id="staffSession" hidden><p class="note info" data-i18n="staff_session_active">Staff access is active in this tab.</p><p id="staffAccountSummary" class="small-text"></p><button class="sec" id="leaveStaff" data-i18n="sign_out">Sign out</button></div></section>
 </dialog>
 <dialog id="settingsDialog" aria-labelledby="settingsTitle">
-  <div class="settings-heading"><div><p class="eyebrow">MAKE IT YOURS</p><h2 id="settingsTitle">Settings</h2></div><button class="close-settings" id="closeSettings" aria-label="Close settings">×</button></div>
+  <div class="settings-heading"><div><p class="eyebrow" data-i18n="make_it_yours">MAKE IT YOURS</p><h2 id="settingsTitle" data-i18n="settings">Settings</h2></div><button class="close-settings" id="closeSettings" aria-label="Close settings">×</button></div>
   <section class="settings-section" aria-labelledby="preferencesTitle">
-    <h3 id="preferencesTitle">Language &amp; voice</h3><p class="muted">Choose how you would like to use UdyamOne. Preferences are saved on this device.</p>
-    <label class="fld" for="lang">Language</label><select id="lang"><option value="en">English</option><option value="hi">हिन्दी</option><option value="ta">தமிழ்</option><option value="te">తెలుగు</option></select>
-    <p class="small-text">Guided questions support all four languages. Detailed service plans are currently in English.</p>
-    <label class="preference-switch"><span><strong>Voice</strong><small>Read advisor questions and the plan summary aloud.</small></span><input type="checkbox" id="voice" role="switch"></label>
-    <p class="small-text">Voice automatically selects a natural male or female voice for your language. It uses Microsoft speech with a matching device voice as fallback. Language changes and this switch stay silent; the next advisor prompt is read aloud.</p>
-    <p id="voiceStatus" class="voice-status" role="status" aria-live="polite">Voice is off.</p>
+    <h3 id="preferencesTitle" data-i18n="language_voice">Language &amp; voice</h3><p class="muted" data-i18n="preferences_text">Choose how you would like to use UdyamOne. Preferences are saved on this device.</p>
+    <label class="fld" for="lang" data-i18n="language">Language</label><select id="lang"><option value="en">English</option><option value="hi">हिन्दी</option><option value="ta">தமிழ்</option><option value="te">తెలుగు</option></select>
+    <p class="small-text" data-i18n="language_scope_text">The complete interface and guided questions use your selected language.</p>
+    <label class="preference-switch"><span><strong data-i18n="voice">Voice</strong><small data-i18n="voice_text">Read advisor questions and the plan summary aloud.</small></span><input type="checkbox" id="voice" role="switch"></label>
+    <p class="small-text" data-i18n="voice_detail">Voice selects a matching natural voice for your language. Language changes stay silent; the next advisor question is read aloud.</p>
+    <p id="voiceStatus" class="voice-status" role="status" aria-live="polite" data-i18n="voice_off">Voice is off.</p>
   </section>
-  <details class="settings-section"><summary>Privacy &amp; documents</summary><p class="small-text">Document images are deleted after extraction. Extracted fields and consent records are retained with the order. Keep your private order access code safe; it lets you reopen the order.</p></details>
-  <section class="settings-section" id="connectionSettings" hidden><h3>Service connections</h3><p class="muted">Account setup is managed on the server. Configuration alone does not confirm a live connection.</p><div id="integrationStatus" class="integration-status"><p>Checking connections…</p></div></section>
-  <details class="settings-section" id="testToolsSection" hidden><summary>Test tools</summary><p class="small-text">Use sample scenarios and simulated verification for rehearsal. These actions do not activate real services or verify identity.</p><label class="preference-switch"><span>Show test controls</span><input type="checkbox" id="testTools" role="switch"></label></details>
+  <details class="settings-section"><summary data-i18n="privacy_documents">Privacy &amp; documents</summary><p class="small-text" data-i18n="privacy_documents_text">Document images are deleted after extraction. Extracted fields and consent records are retained with the order. Keep your private order access code safe; it lets you reopen the order.</p></details>
+  <section class="settings-section" id="connectionSettings" hidden><h3 data-i18n="service_connections">Service connections</h3><p class="muted" data-i18n="service_connections_text">Account setup is managed on the server. Configuration alone does not confirm a live connection.</p><div id="integrationStatus" class="integration-status"><p data-i18n="checking_connections">Checking connections…</p></div></section>
+  <details class="settings-section" id="testToolsSection" hidden><summary data-i18n="test_tools">Test tools</summary><p class="small-text" data-i18n="test_tools_text">Use sample scenarios and simulated verification for rehearsal. These actions do not activate real services or verify identity.</p><label class="preference-switch"><span data-i18n="show_test_controls">Show test controls</span><input type="checkbox" id="testTools" role="switch"></label></details>
 </dialog>
 <div id="toast" class="toast"></div>
 <script>
@@ -350,7 +348,7 @@ const T={
 const NEED_KEYS=['cctv','pos','email','whatsapp','security','backup','wifi','sms','telephony','failover','website','static_ip','tollfree','sdwan','firewall','machine','fleet','leased_line','fibre'];
 const FIELDS=['type','employees','sites','tier','gstin'];
 const OPVAL=[[ 'retail','clinic','office','restaurant','manufacturer','coaching'],[4,12,40],[1,2,4,8],[1,2],[true,false]];
-const S={lang:'en',P:{},step:0,needs:[],off:[],rec:null,order:null,partner:'',partnerExp:null,partnerSig:'',voiceGender:'female'};
+const S={lang:'en',P:{},step:0,needs:[],needsConfirmed:false,off:[],rec:null,order:null,partner:'',partnerExp:null,partnerSig:'',voiceGender:'female'};
 const VC={
   en:{fallback:'Online voice unavailable; using the best device voice.',failed:'No voice is available on this device.',listening:'Listening…',mic:'Voice input',micError:'Voice input could not start'},
   hi:{fallback:'ऑनलाइन आवाज़ उपलब्ध नहीं है; डिवाइस की आवाज़ इस्तेमाल हो रही है।',failed:'इस डिवाइस पर आवाज़ उपलब्ध नहीं है।',listening:'सुन रहा है…',mic:'आवाज़ से लिखें',micError:'माइक्रोफोन शुरू नहीं हो सका'},
@@ -367,12 +365,27 @@ function applyLang(){
   const vc=VC[S.lang]||VC.en;$('mic').title=vc.mic;$('mic').setAttribute('aria-label',vc.mic);
   $('boSeg').options[0].textContent=t.all_segments||'All segments';
   const badge=$('partnerBadge');badge.style.display=S.partner?'inline-block':'none';badge.textContent=(t.partner||'Partner')+': '+S.partner;
+  renderAdvisorAnswers();
+}
+function advisorAnswerLabel(field,value){
+  const t=T_(),index=FIELDS.indexOf(field);if(index<0)return String(value);
+  if(field==='employees')return value<=6?t.opts[index][0]:value<=25?t.opts[index][1]:t.opts[index][2];
+  if(field==='sites')return value===1?t.opts[index][0]:value===2?t.opts[index][1]:value<=6?t.opts[index][2]:t.opts[index][3];
+  const option=OPVAL[index].findIndex(item=>item===value);return option>=0?t.opts[index][option]:String(value);
+}
+function renderAdvisorAnswers(){
+  const box=$('advisorAnswers');if(!box)return;const answered=FIELDS.filter(field=>S.P[field]!==undefined),count=answered.length+(S.needsConfirmed?1:0);
+  box.hidden=count===0;if(!count){box.innerHTML='';return}
+  const rows=answered.map(field=>'<div><span>'+esc(T_().q[FIELDS.indexOf(field)])+'</span><strong>'+esc(advisorAnswerLabel(field,S.P[field]))+'</strong></div>');
+  if(S.needsConfirmed)rows.push('<div><span>'+esc(T_().q[5])+'</span><strong>'+esc(S.needs.map(key=>T_().needs[key]||key).join(', '))+'</strong></div>');
+  box.innerHTML='<div class="advisor-answers-head"><strong>'+esc(tr('answer_review'))+'</strong><span>'+esc(tr('answers_progress',{count}))+'</span></div><div class="advisor-answer-list">'+rows.join('')+'</div>';
 }
 function say(text,user){const d=document.createElement('div');d.className='bubble'+(user?' user':'');d.textContent=text;$('chat').appendChild(d);$('chat').scrollTop=$('chat').scrollHeight;if(!user)speakText(text)}
 function qText(){return T_().q[S.step]}
 function ask(){
-  const t=T_();const c=$('chips');c.innerHTML='';
+  const t=T_();const c=$('chips');c.innerHTML='';renderAdvisorAnswers();
   while(S.step<5 && S.P[FIELDS[S.step]]!==undefined) S.step++;
+  if(S.step>=5&&S.needsConfirmed){run();return}
   $('spendWrap').classList.toggle('hide', S.step<5);
   if(S.step<5){
     say(qText());
@@ -380,21 +393,22 @@ function ask(){
   }else{
     say(t.q[5]);
     NEED_KEYS.forEach(k=>{const b=document.createElement('button');b.textContent=t.needs[k]||k;b.classList.toggle('sel',S.needs.includes(k));b.onclick=()=>{b.classList.toggle('sel');S.needs=S.needs.includes(k)?S.needs.filter(x=>x!==k):[...S.needs,k]};c.appendChild(b)});
-    const b=document.createElement('button');b.className='pri';b.textContent=t.done;b.onclick=()=>{c.innerHTML='';run()};c.appendChild(b);
+    const b=document.createElement('button');b.className='pri';b.textContent=t.done;b.onclick=()=>{S.needsConfirmed=true;renderAdvisorAnswers();c.innerHTML='';run()};c.appendChild(b);
   }
 }
-function resetAdvisor(){S.P={};S.step=0;S.needs=[];S.off=[];S.rec=null;$('chat').innerHTML='';$('res').innerHTML='';$('quoteCard').innerHTML='<p class="muted">'+esc(T_().quote_empty)+'</p>';$('spendWrap').classList.add('hide');ask()}
+function resetAdvisor(){S.P={};S.step=0;S.needs=[];S.needsConfirmed=false;S.off=[];S.rec=null;$('chat').innerHTML='';$('res').innerHTML='';$('quoteCard').innerHTML='<p class="muted">'+esc(T_().quote_empty)+'</p>';$('spendWrap').classList.add('hide');renderAdvisorAnswers();ask()}
 async function sendFree(){
-  const text=$('free').value.trim();if(!text)return;say(text,true);$('free').value='';
+  const text=$('free').value.trim();if(!text)return;$('chat').innerHTML='';say(text,true);$('free').value='';
   try{
     const r=await fetch('/api/intent',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text,lang:S.lang})});
     const d=await r.json();
     if(d.parsed&&d.parsed.profile){const p=d.parsed.profile;
       if(p.type!==undefined)S.P.type=p.type;if(p.employees!==undefined)S.P.employees=p.employees;if(p.sites!==undefined)S.P.sites=p.sites;if(p.tier!==undefined)S.P.tier=p.tier;if(p.gstin!==undefined)S.P.gstin=p.gstin;
-      if(d.parsed.needs)S.needs=d.parsed.needs;
+      if(d.parsed.needs?.length){S.needs=[...new Set([...S.needs,...d.parsed.needs])];S.needsConfirmed=true}
     }
-    if(d.missing&&d.missing.length){
-      const first=d.missing[0];S.step=Math.max(0,FIELDS.indexOf(first));say(T_().required);ask();return;
+    renderAdvisorAnswers();const missing=FIELDS.filter(field=>S.P[field]===undefined);if(!S.needsConfirmed)missing.push('needs');
+    if(missing.length){
+      const first=missing[0];S.step=first==='needs'?5:Math.max(0,FIELDS.indexOf(first));ask();return;
     }
     run();
   }catch(e){toast('Could not parse that. Try the chips.');ask()}
@@ -490,13 +504,14 @@ function init(){
   $('free').onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();sendFree()}};
   $('createOrder').onclick=createOrder;$('kbtn').onclick=submitKyc;$('loadOrder').onclick=()=>loadOrder($('trackId').value.trim());$('refreshOrder').onclick=()=>S.order&&loadOrder(S.order.id);
   $('loadBo').onclick=loadBo;$('refreshBo').onclick=loadBo;$('partnerBtn').onclick=loadPartner;
-  $('lane').onchange=()=>{const free=$('lane').value==='gst_free';$('gstWrap').classList.toggle('hide',free);if(free)$('f_gst').value='';$('consentText').textContent=free?'UdyamOne will read your Udyam, signatory ID and address proof only to verify your business, because you chose the GST-free lane. Images are deleted after reading; the consent record is kept. Upload only documents you are authorized to share.':'UdyamOne will read these documents only to verify your business for this order. Images are deleted after reading; extracted fields and the consent record are kept for the order. Upload only documents you are authorized to share.'};
+  $('lane').onchange=()=>{const free=$('lane').value==='gst_free';$('gstWrap').classList.toggle('hide',free);if(free)$('f_gst').value='';$('consentText').textContent=tr(free?'kyc_consent_free':'kyc_consent_standard')};
   document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>go(b.dataset.t));
   loadHealth();
 }
 // The decision UI starts the app after its handlers have been installed.
 </script>
-<script src="/static/settings.js?v=6"></script>
-<script src="/static/decision.js?v=6"></script>
+<script src="/static/locales.js?v=7"></script>
+<script src="/static/settings.js?v=7"></script>
+<script src="/static/decision.js?v=7"></script>
 </body>
 </html>
