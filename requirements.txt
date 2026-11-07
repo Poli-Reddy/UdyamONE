@@ -22,7 +22,7 @@ onnxruntime>=1.17
 
 # Back-office model
 scikit-learn>=1.4,<2
-joblib>=1.3
+joblib>=1.6.0
 
 # Partner QR
 qrcode[pil]>=7.4
