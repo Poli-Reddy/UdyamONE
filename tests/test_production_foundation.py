@@ -39,6 +39,20 @@ def test_customer_otp_session_and_logout():
     assert client.post("/api/auth/customer/logout", headers=headers).json()["logged_out"]
     assert client.get("/api/auth/customer/session", headers=headers).status_code == 401
 
+    started = client.post("/api/auth/customer/request-otp", json={"phone": mod.RECORDING_DEMO_PHONE}).json()
+    verified = client.post(
+        "/api/auth/customer/verify-otp",
+        json={"challenge_id": started["challenge_id"], "code": started["debug_code"]},
+    ).json()
+    demo_headers = {"Authorization": "Bearer " + verified["access_token"]}
+    session = client.get("/api/auth/customer/session", headers=demo_headers).json()
+    assert session["latest_order_id"] == mod.RECORDING_DEMO_ORDER
+    order = client.get("/api/orders/" + session["latest_order_id"], headers=demo_headers).json()
+    assert order["business_name"] == "Ganesh Woodcraft"
+    assert order["kyc_status"] == "verified"
+    assert order["activation"]["completed_services"] == 1
+    assert len(order["items"]) == 5
+
 
 def test_customer_payload_removes_operator_evidence():
     order, _ = new_order(["email"])

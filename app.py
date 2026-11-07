@@ -336,6 +336,8 @@ def init_db() -> None:
             CREATE TABLE IF NOT EXISTS order_customers (
                 order_id TEXT PRIMARY KEY, phone TEXT NOT NULL
             );
+            CREATE INDEX IF NOT EXISTS idx_order_customers_phone
+                ON order_customers(phone);
             CREATE TABLE IF NOT EXISTS consent_events (
                 id TEXT PRIMARY KEY, occurred_at TEXT NOT NULL, purpose TEXT NOT NULL,
                 notice TEXT NOT NULL, order_id TEXT, lane TEXT, outcome TEXT,
@@ -461,6 +463,68 @@ def _record_consent(
 
 def _lane_for(p: dict) -> str:
     return "Standard" if p.get("gstin_active") else "GST-free"
+
+
+RECORDING_DEMO_PHONE = "8074982840"
+RECORDING_DEMO_ORDER = "UO-DEMO-8074982840"
+
+
+def _prepare_recording_demo(phone: str) -> str | None:
+    """Reset one synthetic recording account; never available outside demo mode."""
+    if not demo_mode() or phone != RECORDING_DEMO_PHONE:
+        return None
+    profile = {
+        "tier": 1,
+        "employees": 2,
+        "sites": 2,
+        "gstin_active": True,
+        "type": "manufacturer",
+        "needs": ["cctv", "whatsapp"],
+        "context": {
+            "locations": [
+                {"id": "site-1", "name": "Main workshop", "tier": 1, "employees": 1, "needs": ["cctv", "whatsapp"], "quantities": {}},
+                {"id": "site-2", "name": "Storage unit", "tier": 1, "employees": 1, "needs": ["cctv", "whatsapp"], "quantities": {}},
+            ],
+            "owned": [],
+            "inventory_confirmed": True,
+            "budget": 5000,
+            "desired_start": None,
+            "wait_for_contract": False,
+        },
+    }
+    plan = make_plan(profile)
+    if not plan["ready"]:
+        raise RuntimeError("Recording demo plan is not ready")
+    quote_data, now = plan["quote"], _utcnow().isoformat(timespec="seconds")
+    with _conn() as connection:
+        connection.execute("BEGIN IMMEDIATE")
+        for table in ("activation_events", "activation_tasks", "plan_revisions", "decision_plans", "order_customers", "consent_events", "payment_intents", "registry_evidence", "interventions"):
+            connection.execute(f"DELETE FROM {table} WHERE order_id=?", (RECORDING_DEMO_ORDER,))
+        connection.execute("DELETE FROM orders WHERE id=?", (RECORDING_DEMO_ORDER,))
+        connection.execute(
+            "INSERT INTO orders VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            (
+                RECORDING_DEMO_ORDER, now, "Ganesh Woodcraft", "Joseph Singh", phone,
+                "joseph@example.com", "Shop/Unit 80, Civil Lines, Nagpur, Maharashtra - 411231",
+                "en", plan["segment"], "Standard", json.dumps(quote_data["items"], ensure_ascii=False),
+                quote_data["monthly"], quote_data["setup"], quote_data["contract_months"],
+                "install_scheduled", "verified", "VERIFIED", "", 1, "demo-recording-v1",
+                json.dumps(profile, ensure_ascii=False),
+            ),
+        )
+        access_token = secrets.token_urlsafe(32)
+        connection.execute("INSERT INTO decision_plans VALUES (?,?,?,?)", (RECORDING_DEMO_ORDER, json.dumps(plan, ensure_ascii=False), hashlib.sha256(access_token.encode()).hexdigest(), now))
+        connection.execute("INSERT INTO order_customers (order_id,phone) VALUES (?,?)", (RECORDING_DEMO_ORDER, phone))
+        activation.seed(connection, RECORDING_DEMO_ORDER, quote_data["items"])
+        events = [
+            activation.TaskEvent(event_id="demo-verification", task_id="verification", action="complete", expected_version=0, evidence="Preloaded synthetic K03 verification for recording"),
+            activation.TaskEvent(event_id="demo-whatsapp-setup", task_id="business:P15:provision", action="complete", expected_version=0, evidence="Synthetic WhatsApp workspace configured"),
+            activation.TaskEvent(event_id="demo-whatsapp-check", task_id="business:P15:check", action="complete", expected_version=0, evidence="Synthetic message send and receive check completed"),
+        ]
+        for item in events:
+            activation.record(connection, RECORDING_DEMO_ORDER, item, "demo_only", "recording-demo")
+        _record_consent("Preloaded synthetic recording journey", "recording-demo-v1", RECORDING_DEMO_ORDER, "Standard", "accepted", connection=connection)
+    return RECORDING_DEMO_ORDER
 
 
 def _order_dict(row: Any) -> dict:
@@ -844,6 +908,7 @@ async def request_customer_otp(b: OTPStartRequest):
 @app.post("/api/auth/customer/verify-otp")
 def verify_customer_otp(b: OTPVerifyRequest):
     now = _utcnow()
+    phone = ""
     with _conn() as c:
         c.execute("BEGIN IMMEDIATE")
         row = c.select_for_update("SELECT * FROM auth_otp_challenges WHERE id=?", (b.challenge_id,)).fetchone()
@@ -862,7 +927,9 @@ def verify_customer_otp(b: OTPVerifyRequest):
             "INSERT INTO customer_sessions (token_hash,phone,created_at,expires_at,revoked_at) VALUES (?,?,?,?,NULL)",
             (digest, row["phone"], now.isoformat(), expires.isoformat()),
         )
-    return {"access_token": token, "token_type": "bearer", "expires_at": expires.isoformat()}
+        phone = str(row["phone"])
+    demo_order_id = _prepare_recording_demo(phone)
+    return {"access_token": token, "token_type": "bearer", "expires_at": expires.isoformat(), "latest_order_id": demo_order_id}
 
 
 @app.get("/api/auth/customer/session")
@@ -870,7 +937,12 @@ def customer_session():
     principal = current_principal()
     if not principal or principal.kind != "customer":
         raise HTTPException(401, "Customer sign-in is required")
-    return {"authenticated": True, "phone": principal.phone}
+    with _conn() as c:
+        latest = c.execute(
+            "SELECT oc.order_id FROM order_customers oc JOIN orders o ON o.id=oc.order_id WHERE oc.phone=? ORDER BY o.created_at DESC LIMIT 1",
+            (principal.phone,),
+        ).fetchone()
+    return {"authenticated": True, "phone": principal.phone, "latest_order_id": latest["order_id"] if latest else None}
 
 
 @app.post("/api/auth/customer/logout")

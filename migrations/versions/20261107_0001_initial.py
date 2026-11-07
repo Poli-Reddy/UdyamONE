@@ -141,6 +141,7 @@ def upgrade() -> None:
         sa.Column("order_id", sa.Text(), sa.ForeignKey("orders.id", ondelete="CASCADE"), primary_key=True),
         sa.Column("phone", sa.Text(), nullable=False),
     )
+    op.create_index("idx_order_customers_phone", "order_customers", ["phone"])
     op.create_table(
         "consent_events",
         sa.Column("id", sa.Text(), primary_key=True),
