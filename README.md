@@ -64,7 +64,7 @@ Copy `.env.example` to `.env` for the synthetic local demo. Demo mode and mock K
 
 ## Interface and access
 
-The customer journey is **Your needs -> Your plan -> Verification -> Track services**. Settings contains language, optional voice playback and staff access. The advisor supports English, Hindi, Tamil and Telugu; the detailed V3 planning, tracking and staff panels remain English. Microphone transcripts can be reviewed before sending.
+The public home explains the service before asking for data. Sign in explicitly separates business customers from employees and partners. The customer journey is **Your needs -> Your plan -> Verification -> Track services**; future steps stay locked until prerequisites are complete. Settings contains language, optional voice playback and privacy information. The advisor supports English, Hindi, Tamil and Telugu; detailed planning, tracking and staff panels remain English. Microphone transcripts can be reviewed before sending.
 
 Local demo orders receive a private access token whose hash is stored server-side. The pilot foundation adds phone OTP customer sessions and signed OIDC staff tokens with role claims. The shared `ADMIN_TOKEN` remains only for local/staging compatibility and is rejected as a production identity mechanism. Demo mode permits local rehearsal controls and must remain bound to localhost.
 
@@ -92,7 +92,7 @@ The design uses purpose-specific consent checks, temporary document processing, 
 
 [Read the design note](PRIVACY.md) or [download the one-page PDF](docs/NTG_VITVELLORE_Privacy_Security.pdf).
 
-Production deployment requires additional authentication and staff roles, transport and storage protection, retention and rights-request workflows, operational monitoring, incident response and provider acceptance testing. These requirements are documented separately from controls already implemented.
+Before a live pilot, complete managed gateway TLS and encryption, durable OCR jobs, retention and rights-request workflows, operational monitoring, incident response and provider acceptance testing. These requirements are documented separately from controls already implemented.
 
 ## Verification
 
