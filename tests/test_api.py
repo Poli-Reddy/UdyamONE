@@ -114,7 +114,20 @@ def _files(applicant, include_gst=True):
     return out
 
 
-def test_kyc_standard_and_gst_free():
+def test_kyc_standard_and_gst_free(monkeypatch):
+    import kyc
+
+    monkeypatch.setattr(kyc, "extract_udyam_number", lambda _path: "UDYAM-MH-00-9516696")
+    path = os.path.join(SAMPLES, "K03_udyam_certificate.png")
+    with open(path, "rb") as certificate:
+        prefill = client.post(
+            "/api/kyc/extract-udyam",
+            data={"consent": "true", "order_id": ""},
+            files={"udyam": (os.path.basename(path), certificate, "image/png")},
+        )
+    assert prefill.status_code == 200
+    assert prefill.json()["udyam_number"] == "UDYAM-MH-00-9516696"
+
     files = _files("K03")
     try:
         r = client.post(

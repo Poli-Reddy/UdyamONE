@@ -1166,6 +1166,74 @@ def set_status(order_id: str, b: StatusRequest, token: str | None = Header(None,
     return _order_payload(order_id)
 
 
+@app.post("/api/kyc/extract-udyam")
+async def extract_udyam_number(
+    consent: str = Form(...),
+    order_id: str = Form(""),
+    udyam: UploadFile = File(...),
+    token: str | None = Header(None, alias="x-order-token"),
+    admin_token: str | None = Header(None, alias="x-admin-token"),
+    staff_request: str | None = Header(None, alias="x-staff-request"),
+):
+    """Consent-gated OCR prefill; the image and raw OCR text are not retained."""
+    if consent != "true":
+        raise HTTPException(400, "Consent is required before reading the Udyam certificate")
+    if not SETTINGS.allow_mock_kyc:
+        raise HTTPException(503, "Production document-verification provider is not configured")
+    if order_id:
+        principal = current_principal()
+        if (principal and principal.kind == "staff") or admin_token or (demo_mode() and staff_request == "true"):
+            _require_admin(admin_token, KYC_WRITE_ROLES)
+        else:
+            _require_order(order_id, token)
+    if not udyam.filename:
+        raise HTTPException(400, "Choose a Udyam certificate image")
+    if udyam.content_type and not udyam.content_type.startswith("image/"):
+        raise HTTPException(400, "Udyam certificate must be an image (JPG/PNG)")
+    data = await udyam.read(8 * 1024 * 1024 + 1)
+    if len(data) > 8 * 1024 * 1024:
+        raise HTTPException(400, "Udyam certificate is larger than 8 MB")
+    try:
+        from PIL import Image
+        with Image.open(io.BytesIO(data)) as image:
+            if image.format not in {"PNG", "JPEG", "WEBP"}:
+                raise HTTPException(415, "Udyam certificate must be PNG, JPEG or WebP")
+            if image.width * image.height > 25_000_000:
+                raise HTTPException(413, "Udyam certificate has too many pixels")
+            image.verify()
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(400, "Udyam certificate is not a valid image")
+    try:
+        import kyc
+    except Exception as exc:
+        raise HTTPException(503, f"KYC engine unavailable: {exc}")
+    if kyc.backend() == "none":
+        raise HTTPException(503, "KYC engine unavailable: install RapidOCR or Tesseract")
+    folder = tempfile.mkdtemp()
+    path = f"{folder}/udyam_certificate.png"
+    try:
+        with open(path, "wb") as output:
+            output.write(data)
+        try:
+            await asyncio.wait_for(_OCR_SEMAPHORE.acquire(), timeout=2)
+        except asyncio.TimeoutError:
+            raise HTTPException(503, "Document processing is busy; try again shortly")
+        try:
+            number = await asyncio.to_thread(kyc.extract_udyam_number, path)
+        finally:
+            _OCR_SEMAPHORE.release()
+    finally:
+        shutil.rmtree(folder, ignore_errors=True)
+    _record_consent("Udyam certificate number prefill", "udyam-prefill-v1", order_id or None, outcome="extracted" if number else "not_found")
+    return {
+        "udyam_number": number,
+        "ocr": kyc.backend(),
+        "message": "Udyam number filled from the certificate" if number else "The Udyam number could not be read; enter it manually",
+    }
+
+
 @app.post("/api/kyc")
 async def kyc_api(
     consent: str = Form(...),

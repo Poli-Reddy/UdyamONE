@@ -36,6 +36,7 @@ function harness(){
 test('customer tracker keeps internal controls, IDs and unavailable payments out of the view',()=>{
  const h=harness();h.run('renderOrder(fixture.order)');const markup=h.nodes.get('trackRes').innerHTML;
  assert.match(markup,/Main clinic/);assert.match(markup,/Order received/);assert.match(markup,/Continue verification/);
+ assert.match(markup,/service-location checklists complete/);assert.match(markup,/3 selected needs produced 3 catalogue products and 3 service instances across 1 locations/);
  for(const text of ['data-task=','id="taskEvidence"','main:P01:','Create test checkout','Staff activation controls','Simulate verification'])assert.ok(!markup.includes(text),text);
  assert.ok(!h.nodes.has('paymentLink'));assert.ok(h.nodes.has('trackToKyc'));
 });

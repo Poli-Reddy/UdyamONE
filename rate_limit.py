@@ -35,6 +35,7 @@ LIMITS = {
     "/api/tts": (20, 60),
     "/api/bills/extract": (5, 300),
     "/api/kyc": (5, 300),
+    "/api/kyc/extract-udyam": (10, 300),
     "/api/auth/customer/request-otp": (5, 3600),
     "/api/auth/customer/verify-otp": (10, 900),
 }

@@ -366,6 +366,14 @@ def _udyam_from(lines: list[str]) -> str:
     return m.group(0) if m else raw
 
 
+def extract_udyam_number(path: str) -> str:
+    """Extract only the registration number for consented form prefill."""
+    lines, _sharpness_score, _angle = ocr(path)
+    value = _udyam_from(lines)
+    value = re.sub(r"\s+", "", value).upper()
+    return value if re.fullmatch(r"UDYAM-[A-Z]{2}-\d{2}-\d{7}", value) else ""
+
+
 # ---------------------------------------------------------------------------
 # Main check
 # ---------------------------------------------------------------------------
