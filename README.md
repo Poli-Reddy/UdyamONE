@@ -2,7 +2,7 @@
 
 MSME service discovery and onboarding, developed by **Team NTG, VIT Vellore** for Airtel SYNC 2026.
 
-[Provided recording](https://drive.google.com/file/d/1oh0mNItb71vjEhhgsLmN4iJyzLmT2MmL/view) | [Architecture](ARCHITECTURE.md) | [Privacy and security](PRIVACY.md) | [Pilot deployment](PRODUCTION.md)
+[Provided recording](https://drive.google.com/file/d/1oh0mNItb71vjEhhgsLmN4iJyzLmT2MmL/view) | [Demo runbook](DEMO_V3.md) | [Architecture](ARCHITECTURE.md) | [Privacy and security](PRIVACY.md) | [Pilot deployment](PRODUCTION.md)
 
 The public interface begins with a concise product explanation, then separates business-customer and employee/partner sign-in. Customer navigation is prerequisite-gated; signed-in customers receive a next-action dashboard. The staff workspace filters queues and controls by OIDC role. See [FRONTEND_PLAN.md](FRONTEND_PLAN.md).
 

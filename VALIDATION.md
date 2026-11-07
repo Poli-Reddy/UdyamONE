@@ -13,6 +13,8 @@ Environment: Windows, Python 3.11.18, FastAPI, local SQLite and PostgreSQL 17 co
 - Settings now contains language, one Voice toggle, privacy and staff access. There is no gender/source/speed selector or Test/Play button. Enabling Voice and changing language generated zero speech requests; advancing to the next real advisor question generated one.
 - A live Tamil neural speech request returned HTTP 200, 22,896 bytes of MP3 audio and `ta-IN-PallaviNeural`. Human listening quality and physical microphone permission still need the pre-demo device check.
 - Recovery price deltas now put the sign before the currency symbol (`-₹100`).
+- The final judge-demo rehearsal used matching Ganesh Woodcraft / Joseph Singh checkout data and the bound K03 documents. Chrome completed OTP sign-in, a ₹2,011 Fibre/Email/CCTV order, genuine K03 verification, Email evidence completion, Fibre failure, customer-only AirFiber recovery to ₹1,911, preserved Email progress and the zero-lift ₹0 assistance policy.
+- That rehearsal exposed Chrome's stricter `v`-mode parsing of the formatted-phone pattern. The punctuation is now escaped correctly; a clean reload accepts both plain and formatted numbers with no console warning.
 - Prices remain identified as illustrative at plan review; verification, activation and payment limitations are shown where they affect the customer. This presentation update does not turn the supplied catalogue or simulated integrations into live services.
 
 ### Earlier complete review
