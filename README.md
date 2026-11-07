@@ -64,7 +64,7 @@ Copy `.env.example` to `.env` for the synthetic local demo. Demo mode and mock K
 
 ## Interface and access
 
-The public home explains the service before asking for data. Sign in explicitly separates business customers from employees and partners. The customer journey is **Your needs -> Your plan -> Verification -> Track services**; future steps stay locked until prerequisites are complete. Settings contains language, optional voice playback and privacy information. The advisor supports English, Hindi, Tamil and Telugu; detailed planning, tracking and staff panels remain English. Microphone transcripts can be reviewed before sending.
+The public home explains the service before asking for data. Sign in explicitly separates business customers from employees and partners. The customer journey is **Your needs -> Your plan -> Verification -> Track services**; future steps stay locked until prerequisites are complete. Settings contains language, optional voice playback and privacy information. English, Hindi, Tamil and Telugu apply across the interface. One typed or spoken sentence can answer several advisor questions; understood answers are shown explicitly and the advisor continues from the first missing answer.
 
 Local demo orders receive a private access token whose hash is stored server-side. The pilot foundation adds phone OTP customer sessions and signed OIDC staff tokens with role claims. The shared `ADMIN_TOKEN` remains only for local/staging compatibility and is rejected as a production identity mechanism. Demo mode permits local rehearsal controls and must remain bound to localhost.
 

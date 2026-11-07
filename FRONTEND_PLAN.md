@@ -6,7 +6,7 @@ Show one role only the information and actions needed for its next decision. Int
 
 ## Customer journey
 
-1. **Your needs** — short guided questions, then a review of locations, existing services and budget.
+1. **Your needs** — short guided questions, with several answers extractable from one typed/spoken sentence, then a review of locations, existing services and budget.
 2. **Your plan** — Keep / Add now / Replace later, separated existing and new charges, open questions and one primary acceptance action.
 3. **Verification** — available only after an order exists; show the exact documents for the accepted GST or GST-free lane, purpose-specific consent and fix instructions.
 4. **Track services** — plain-language next action, progress grouped by service/location, private order reopening and customer-controlled recovery acceptance.
@@ -26,6 +26,7 @@ After authentication, customer navigation is replaced with a work workspace. Pan
 - **Administrator:** connection status and configuration diagnostics; no automatic right to accept customer terms.
 
 Selecting an order opens the same service tracker with staff-only evidence controls appropriate to the authenticated role.
+The customer step navigation is absent in staff mode. My account shows the active staff identity and sign-out; an opened order provides a direct Back to work queue action.
 
 ## Interaction standards
 
@@ -36,3 +37,5 @@ Selecting an order opens the same service tracker with staff-only evidence contr
 - Preserve keyboard focus, labels, status announcements and mobile layout.
 - Disable unavailable navigation rather than opening an empty screen.
 - Display estimates as estimates and simulations as simulations.
+- Show interpreted advisor answers and an answered-question count before continuing from the first missing answer.
+- Apply English, Hindi, Tamil or Telugu to the complete interface while preserving official product names and identifiers.
